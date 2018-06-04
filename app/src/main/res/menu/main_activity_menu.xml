@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/new_board_button"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Generate New Board"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/solve_board_button"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="Solve"
+        app:showAsAction="always" />
+
+</menu>
