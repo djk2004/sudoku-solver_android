@@ -30,15 +30,21 @@ public class Solver {
     public Solver(CellModel model) {
         this.model = model;
         Set<SolverCell> unfilledCells = buildRandomizedSet(buildSolverCells(model.getUnfilledCells()));
-        this.unfilled = new PriorityQueue<>(unfilledCells.size(), new Comparator<SolverCell>() {
-            
-            @Override
-            public int compare(SolverCell a, SolverCell b) {
-                Integer aSize = Integer.valueOf(a.getSelectedCount() + a.getCell().getAvailableValues().size());
-                Integer bSize = Integer.valueOf(b.getSelectedCount() + b.getCell().getAvailableValues().size());
-                return aSize.compareTo(bSize);
-            }
-        });
+
+        final Comparator<SolverCell> comparator;
+        int strategyID = new Random(System.currentTimeMillis()).nextInt(5);
+        if (strategyID == 0) {
+            comparator = new CubeGroupComparator();
+        } else if (strategyID == 1) {
+            comparator = new HorizontalGroupComparator();
+        } else if (strategyID == 2) {
+            comparator = new VerticalGroupComparator();
+        } else {
+            // the default comparator should be more heavily weighted than the others
+            comparator = new DefaultComparator();
+        }
+
+        this.unfilled = new PriorityQueue<>(unfilledCells.size(), comparator);
         this.unfilled.addAll(unfilledCells);
         this.filled = new ArrayDeque<>();
     }
@@ -172,6 +178,42 @@ public class Solver {
 
         public int getSelectedCount() {
             return selected;
+        }
+    }
+
+    private static class DefaultComparator implements Comparator<SolverCell> {
+        @Override
+        public int compare(SolverCell a, SolverCell b) {
+            Integer aSize = Integer.valueOf(a.getSelectedCount() + a.getCell().getAvailableValues().size());
+            Integer bSize = Integer.valueOf(b.getSelectedCount() + b.getCell().getAvailableValues().size());
+            return aSize.compareTo(bSize);
+        }
+    }
+
+    private static class HorizontalGroupComparator implements Comparator<SolverCell> {
+        @Override
+        public int compare(SolverCell a, SolverCell b) {
+            Integer aSize = Integer.valueOf(a.getSelectedCount() + a.getCell().getHorizontalGroup().getAvailableValues().size());
+            Integer bSize = Integer.valueOf(b.getSelectedCount() + b.getCell().getHorizontalGroup().getAvailableValues().size());
+            return aSize.compareTo(bSize);
+        }
+    }
+
+    private static class VerticalGroupComparator implements Comparator<SolverCell> {
+        @Override
+        public int compare(SolverCell a, SolverCell b) {
+            Integer aSize = Integer.valueOf(a.getSelectedCount() + a.getCell().getVerticalGroup().getAvailableValues().size());
+            Integer bSize = Integer.valueOf(b.getSelectedCount() + b.getCell().getVerticalGroup().getAvailableValues().size());
+            return aSize.compareTo(bSize);
+        }
+    }
+
+    private static class CubeGroupComparator implements Comparator<SolverCell> {
+        @Override
+        public int compare(SolverCell a, SolverCell b) {
+            Integer aSize = Integer.valueOf(a.getSelectedCount() + a.getCell().getCubeGroup().getAvailableValues().size());
+            Integer bSize = Integer.valueOf(b.getSelectedCount() + b.getCell().getCubeGroup().getAvailableValues().size());
+            return aSize.compareTo(bSize);
         }
     }
 }
