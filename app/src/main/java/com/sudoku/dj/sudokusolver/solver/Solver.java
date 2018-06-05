@@ -32,7 +32,7 @@ public class Solver {
         Set<SolverCell> unfilledCells = buildRandomizedSet(buildSolverCells(model.getUnfilledCells()));
 
         final Comparator<SolverCell> comparator;
-        int strategyID = new Random(System.currentTimeMillis()).nextInt(5);
+        int strategyID = new Random(System.currentTimeMillis()).nextInt(10);
         if (strategyID == 0) {
             comparator = new CubeGroupComparator();
         } else if (strategyID == 1) {
