@@ -1,7 +1,11 @@
 package com.sudoku.dj.sudokusolver.solver;
 
+import android.app.Activity;
 import android.os.AsyncTask;
+import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Random;
 
 public class CellModelManager {
@@ -71,11 +75,11 @@ public class CellModelManager {
         return task != null && task.isRunning();
     }
 
-    public static void solve() {
+    public static void solve(Activity activity) {
         if (task != null && task.isCancelled()) {
             throw new RuntimeException("Task currently running!");
         }
-        task = new SolveTask();
+        task = new SolveTask(activity);
         task.execute(getInstance());
     }
 
@@ -89,6 +93,12 @@ public class CellModelManager {
         private int attempts, steps;
         private long start, elapsed;
         private boolean canCancel, isRunning = false;
+
+        private final Activity activity;
+
+        public SolveTask(final Activity activity) {
+            this.activity = activity;
+        }
 
         @Override
         protected SolveStats doInBackground(CellModel... models) {
@@ -151,7 +161,16 @@ public class CellModelManager {
 
         @Override
         protected void onPostExecute(SolveStats stats) {
-
+            if (activity.isDestroyed() || activity.isFinishing() || canCancel || steps == 0)
+            {
+                return;
+            }
+            SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
+            StringBuilder builder = new StringBuilder();
+            builder.append("Solved in "+df.format(new Date(stats.getElapsedTime())));
+            builder.append(" in "+stats.getSteps()+" steps");
+            builder.append(" with "+stats.getAttempts()+" attempts");
+            Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
         }
     }
 }

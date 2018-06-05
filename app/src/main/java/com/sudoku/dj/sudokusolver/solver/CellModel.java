@@ -161,7 +161,7 @@ public class CellModel {
      */
     public void resetAllCells() {
         for (CellImpl cell: cells) {
-
+            cell.unlockCell();
             resetValue(cell);
         }
     }
@@ -177,6 +177,18 @@ public class CellModel {
                 cell.getAvailableValues().size() == 0) {
                 return false;
             }
+        }
+        return true;
+    }
+
+    /**
+     * Returns true if all cells have an assigned value and no other available values
+     * @return
+     */
+    public boolean isSolved() {
+        for (CellImpl cell: cells) {
+            if (cell.getValue() == NO_VALUE || cell.getAvailableValues().size() > 0)
+                return false;
         }
         return true;
     }

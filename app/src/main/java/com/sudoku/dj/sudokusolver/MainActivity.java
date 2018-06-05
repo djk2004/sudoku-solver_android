@@ -76,18 +76,19 @@ public class MainActivity extends AppCompatActivity {
                 CellModelManager.buildNewBoard(filledCells);
             }
         } else if (id == R.id.solve_board_button) {
-            try {
-                if (CellModelManager.isSolvingBoard()) {
-                    item.setIcon(android.R.drawable.ic_media_play);
-                    CellModelManager.cancelSolve();
-                    Toast.makeText(this, "Pausing solve task...", Toast.LENGTH_SHORT).show();
-                } else {
-                    item.setIcon(android.R.drawable.ic_media_pause);
-                    CellModelManager.solve();
-                }
+            if (!CellModelManager.getInstance().isSolved()) {
+                try {
+                    if (CellModelManager.isSolvingBoard()) {
+                        item.setIcon(android.R.drawable.ic_media_play);
+                        CellModelManager.cancelSolve();
+                    } else {
+                        item.setIcon(android.R.drawable.ic_media_pause);
+                        CellModelManager.solve(this);
+                    }
 
-            } catch (Exception e) {
-                Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                }
             }
         }
         return super.onOptionsItemSelected(item);
