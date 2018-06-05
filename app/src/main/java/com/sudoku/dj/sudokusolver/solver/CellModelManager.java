@@ -5,6 +5,7 @@ import android.os.AsyncTask;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Random;
 
@@ -148,10 +149,28 @@ public class CellModelManager {
                 if (++attempts > 1) {
                     model.resetCells();
                 }
-                Solver solver = new Solver(model);
+                Solver solver = new Solver(model, buildComparator());
                 boolean backtrack = r.nextBoolean();
                 steps += solver.solve(backtrack);
             } while (!model.isSolveable() && !canCancel);
+        }
+
+        private Comparator<Cell> buildComparator() {
+            int strategyID = new Random(System.currentTimeMillis()).nextInt(10);
+            if (strategyID == 0) {
+                return new Solver.CubeGroupComparator();
+            }
+            if (strategyID == 1) {
+                return new Solver.HorizontalGroupComparator();
+            }
+            if (strategyID == 2) {
+                return new Solver.VerticalGroupComparator();
+            }
+            if (strategyID == 3) {
+                return new Solver.IDComparator();
+            }
+            // the default comparator should be more heavily weighted than the others
+            return new Solver.DefaultComparator();
         }
 
         @Override

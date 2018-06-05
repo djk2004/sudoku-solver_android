@@ -75,20 +75,17 @@ public class MainActivity extends AppCompatActivity {
                 int filledCells = r.nextInt(15) + 15;
                 CellModelManager.buildNewBoard(filledCells);
             }
-        } else if (id == R.id.solve_board_button) {
-            if (!CellModelManager.getInstance().isSolved()) {
-                try {
-                    if (CellModelManager.isSolvingBoard()) {
-                        item.setIcon(android.R.drawable.ic_media_play);
-                        CellModelManager.cancelSolve();
-                    } else {
-                        item.setIcon(android.R.drawable.ic_media_pause);
-                        CellModelManager.solve(this);
-                    }
-
-                } catch (Exception e) {
-                    Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+        } else if (id == R.id.solve_board_button && !CellModelManager.getInstance().isSolved()) {
+            try {
+                if (CellModelManager.isSolvingBoard()) {
+                    item.setIcon(android.R.drawable.ic_media_play);
+                    CellModelManager.cancelSolve();
+                } else {
+                    item.setIcon(android.R.drawable.ic_media_pause);
+                    CellModelManager.solve(this);
                 }
+            } catch (Exception e) {
+                Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
         return super.onOptionsItemSelected(item);
