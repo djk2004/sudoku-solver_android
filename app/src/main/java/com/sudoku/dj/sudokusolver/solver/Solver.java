@@ -194,4 +194,25 @@ public class Solver {
             return aSize.compareTo(bSize);
         }
     }
+
+    public static class MixedGroupComparator implements Comparator<Cell> {
+
+        private int getValue(Cell cell) {
+            int id = cell.getID();
+            if (id % 3 == 0) {
+                return cell.getCubeGroup().getAvailableValues().size();
+            }
+            if (id % 2 == 0) {
+                return cell.getVerticalGroup().getAvailableValues().size();
+            }
+            return cell.getHorizontalGroup().getAvailableValues().size();
+        }
+
+        @Override
+        public int compare(Cell a, Cell b) {
+            Integer aValue = Integer.valueOf(getValue(a));
+            Integer bValue = Integer.valueOf(getValue(b));
+            return aValue.compareTo(bValue);
+        }
+    }
 }

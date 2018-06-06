@@ -169,6 +169,9 @@ public class CellModelManager {
             if (strategyID == 3) {
                 return new Solver.IDComparator();
             }
+            if (strategyID == 4) {
+                return new Solver.MixedGroupComparator();
+            }
             // the default comparator should be more heavily weighted than the others
             return new Solver.DefaultComparator();
         }
