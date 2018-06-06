@@ -13,4 +13,10 @@
         android:title="Solve"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/reset_board_button"
+        android:icon="@android:drawable/ic_menu_revert"
+        android:title="Reset"
+        app:showAsAction="always" />
+
 </menu>

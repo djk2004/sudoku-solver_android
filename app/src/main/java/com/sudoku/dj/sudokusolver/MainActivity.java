@@ -118,6 +118,12 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
+        } else if (id == R.id.reset_board_button) {
+            if (CellModelManager.isSolvingBoard()) {
+                Toast.makeText(this, "Cannot reset board while solving", Toast.LENGTH_SHORT).show();
+            } else {
+                CellModelManager.getInstance().resetCells();
+            }
         }
         return super.onOptionsItemSelected(item);
     }
