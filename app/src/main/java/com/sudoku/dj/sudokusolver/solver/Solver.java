@@ -113,6 +113,12 @@ public class Solver {
         return steps;
     }
 
+    /**
+     * Creates a board that fills no more than the specified number of cells.  If a board becomes
+     * unsolveable, then this will backtrack only one step to return the board with the last solveable
+     * state.
+     * @param filledCells
+     */
     public void buildNewBoard(int filledCells) {
         if (!model.isEmptyBoard()) {
             throw new RuntimeException("Cell model must be empty to generate a new board");
@@ -131,6 +137,13 @@ public class Solver {
                 } else {
                     model.resetValue(current);
                     unfilled.add(current);
+
+                    // Forces the loop to end with the current board, which should be solveable
+                    // at this point.  This is important because the board creation process
+                    // should be very fast, otherwise this process must move into a background task.
+                    // Ideally, this loop should iterate no more than about 30-35 times, once for
+                    // each filled cell in the board.
+                    cellCount = filledCells;
                 }
             }
         }
