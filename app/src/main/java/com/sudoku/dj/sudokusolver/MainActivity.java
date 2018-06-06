@@ -25,6 +25,11 @@ public class MainActivity extends AppCompatActivity {
     private Map<Integer, Integer> cellIDsToBoxIDs;
     private Menu menu;
 
+    private int generateFilledCellsCount() {
+        Random r = new Random(System.currentTimeMillis());
+        return r.nextInt(15) + 10;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,8 +38,7 @@ public class MainActivity extends AppCompatActivity {
         if (!CellModelManager.isModelInitialized()) {
             // This should only happen when the activity is first created on application start
             cellIDsToBoxIDs = buildCellIDsMap();
-            Random r = new Random(System.currentTimeMillis());
-            int filledCells = r.nextInt(15) + 15;
+            int filledCells = generateFilledCellsCount();
             reg = CellModelManager.buildNewBoard(filledCells, new CellModel.ChangeListener() {
                 @Override
                 public void onChange(final Cell cell, int oldValue) {
@@ -82,8 +86,7 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 resetSolveButtonIcon();
 
-                Random r = new Random(System.currentTimeMillis());
-                int filledCells = r.nextInt(15) + 15;
+                int filledCells = generateFilledCellsCount();
                 CellModelManager.buildNewBoard(filledCells);
             }
         } else if (id == R.id.solve_board_button && !CellModelManager.getInstance().isSolved()) {
