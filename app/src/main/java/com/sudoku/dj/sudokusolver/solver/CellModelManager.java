@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.widget.Toast;
 
+import com.sudoku.dj.sudokusolver.MainActivity;
+
 import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.Date;
@@ -76,11 +78,11 @@ public class CellModelManager {
         return task != null && task.isRunning();
     }
 
-    public static void solve(Activity activity) {
+    public static void solve(SolverListener solverListener) {
         if (task != null && task.isCancelled()) {
             throw new RuntimeException("Task currently running!");
         }
-        task = new SolveTask(activity);
+        task = new SolveTask(solverListener);
         task.execute(getInstance());
     }
 
@@ -90,15 +92,19 @@ public class CellModelManager {
         long getElapsedTime();
     }
 
+    public static interface SolverListener {
+        void onSolved(SolveStats stats);
+    }
+
     private static class SolveTask extends AsyncTask<CellModel, Integer, SolveStats> {
         private int attempts, steps;
         private long start, elapsed;
         private boolean canCancel, isRunning = false;
 
-        private final Activity activity;
+        private final SolverListener solverListener;
 
-        public SolveTask(final Activity activity) {
-            this.activity = activity;
+        public SolveTask(final SolverListener solverListener) {
+            this.solverListener = solverListener;
         }
 
         @Override
@@ -183,16 +189,11 @@ public class CellModelManager {
 
         @Override
         protected void onPostExecute(SolveStats stats) {
-            if (activity.isDestroyed() || activity.isFinishing() || canCancel || steps == 0)
+            if (canCancel || steps == 0)
             {
                 return;
             }
-            SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
-            StringBuilder builder = new StringBuilder();
-            builder.append("Solved in "+df.format(new Date(stats.getElapsedTime())));
-            builder.append(" in "+stats.getSteps()+" steps");
-            builder.append(" with "+stats.getAttempts()+" attempts");
-            Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
+            solverListener.onSolved(stats);
         }
     }
 }

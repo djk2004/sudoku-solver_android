@@ -1,5 +1,6 @@
 package com.sudoku.dj.sudokusolver;
 
+import android.app.Activity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -11,7 +12,9 @@ import com.sudoku.dj.sudokusolver.solver.Cell;
 import com.sudoku.dj.sudokusolver.solver.CellModel;
 import com.sudoku.dj.sudokusolver.solver.CellModelManager;
 
+import java.text.SimpleDateFormat;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -20,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
 
     private CellModel.ChangeListenerRegistration reg;
     private Map<Integer, Integer> cellIDsToBoxIDs;
+    private Menu menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,8 +63,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        this.menu = menu;
         getMenuInflater().inflate(R.menu.main_activity_menu, menu);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    private void resetSolveButtonIcon() {
+        menu.getItem(1).setIcon(android.R.drawable.ic_media_play);
     }
 
     @Override
@@ -71,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
             if (CellModelManager.isSolvingBoard()) {
                 Toast.makeText(this, "Cannot create a new board while solving the current board", Toast.LENGTH_SHORT).show();
             } else {
+                resetSolveButtonIcon();
+
                 Random r = new Random(System.currentTimeMillis());
                 int filledCells = r.nextInt(15) + 15;
                 CellModelManager.buildNewBoard(filledCells);
@@ -82,7 +93,24 @@ public class MainActivity extends AppCompatActivity {
                     CellModelManager.cancelSolve();
                 } else {
                     item.setIcon(android.R.drawable.ic_media_pause);
-                    CellModelManager.solve(this);
+
+                    final MainActivity activity = this;
+                    CellModelManager.solve(new CellModelManager.SolverListener() {
+                        @Override
+                        public void onSolved(CellModelManager.SolveStats stats) {
+                            if (activity.isDestroyed() || activity.isFinishing()) {
+                                return;
+                            }
+                            activity.resetSolveButtonIcon();
+
+                            SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
+                            StringBuilder builder = new StringBuilder();
+                            builder.append("Solved in "+df.format(new Date(stats.getElapsedTime())));
+                            builder.append(" in "+stats.getSteps()+" steps");
+                            builder.append(" with "+stats.getAttempts()+" attempts");
+                            Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
+                        }
+                    });
                 }
             } catch (Exception e) {
                 Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
