@@ -1,6 +1,8 @@
 package com.sudoku.dj.sudokusolver;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -124,6 +126,25 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 CellModelManager.getInstance().resetCells();
             }
+        } else if (id == R.id.about_app) {
+            String message = new StringBuilder()
+                .append("by DJ Kwiatkowski, June 2018\n\n")
+                .append("Image Sources: \n")
+                .append("Material Icons, Apache 2.0\n")
+                .append("Oxygen Icon Team, LGPL\n")
+                .append("Pixabay, CC0 Creative Commons")
+                .toString();
+            AlertDialog dialog = new AlertDialog.Builder(this).create();
+            dialog.setTitle("About Sudoku Solver");
+            dialog.setMessage(message);
+            dialog.setIcon(R.mipmap.ksudoku_icon);
+            dialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+            dialog.show();
         }
         return super.onOptionsItemSelected(item);
     }
