@@ -42,4 +42,10 @@ public interface Cell {
      * is not used by any other cells in the horizontal, vertical, or cube groups.
      */
     Set<Integer> getAvailableValues();
+
+    /**
+     * Returns true if this cell is locked.
+     * @return
+     */
+    boolean isLocked();
 }

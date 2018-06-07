@@ -150,7 +150,7 @@ public class CellModel {
      */
     public void resetCells() {
         for (CellImpl cell: cells) {
-            if (!cell.isImmutable()) {
+            if (!cell.isLocked()) {
                 resetValue(cell);
             }
         }
@@ -172,7 +172,7 @@ public class CellModel {
      */
     public boolean isSolveable() {
         for (CellImpl cell: cells) {
-            if (!cell.isImmutable() && 
+            if (!cell.isLocked() &&
                 cell.getValue() == NO_VALUE && 
                 cell.getAvailableValues().size() == 0) {
                 return false;
@@ -198,7 +198,7 @@ public class CellModel {
      */
     public boolean isEmptyBoard() {
         for (CellImpl cell: cells) {
-            if (cell.isImmutable() || cell.getValue() != NO_VALUE) {
+            if (cell.isLocked() || cell.getValue() != NO_VALUE) {
                 return false;
             }
         }
@@ -212,6 +212,9 @@ public class CellModel {
         for (CellImpl cell: cells) {
             if (cell.getValue() != NO_VALUE) {
                 cell.lockCell();
+                for (ChangeListener listener: listeners) {
+                    listener.onChange(cell, NO_VALUE);
+                }
             }
         }
     }
@@ -320,11 +323,8 @@ public class CellModel {
             this.value = value;
         }
 
-        /**
-         * Returns true if the cell is immutable.  Cells can only be modified if they are not
-         * assigned an initial value.
-         */
-        public boolean isImmutable() {
+        @Override
+        public boolean isLocked() {
             return isImmutable;
         }
 

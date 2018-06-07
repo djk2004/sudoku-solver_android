@@ -3,6 +3,7 @@ package com.sudoku.dj.sudokusolver;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -51,6 +52,9 @@ public class MainActivity extends AppCompatActivity {
                             TextView text = (TextView)findViewById(cellIDsToBoxIDs.get(id));
                             int value = cell.getValue();
                             String textValue = value == 0 ? " " : ""+value;
+                            text.setTextColor(cell.isLocked() ?
+                                    ContextCompat.getColor(text.getContext(), android.R.color.black) :
+                                    ContextCompat.getColor(text.getContext(), R.color.colorPrimaryDark));
                             text.setText(textValue);
                         }
                     });
