@@ -113,6 +113,20 @@ public class MainActivity extends AppCompatActivity {
                         builder.append(" with "+stats.getAttempts()+" attempts");
                         Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
                     }
+
+                    @Override
+                    public void onLongRunningTask(CellModelManager.SolveStats stats) {
+                        if (activity.isDestroyed() || activity.isFinishing()) {
+                            return;
+                        }
+
+                        SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
+                        StringBuilder builder = new StringBuilder();
+                        builder.append("Run time: "+df.format(new Date(stats.getElapsedTime())));
+                        builder.append(", "+stats.getSteps()+" steps");
+                        builder.append(" with "+stats.getAttempts()+" attempts");
+                        Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
+                    }
                 });
             }
         } catch (Exception e) {

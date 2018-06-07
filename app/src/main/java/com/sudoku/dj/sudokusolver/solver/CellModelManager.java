@@ -94,6 +94,7 @@ public class CellModelManager {
 
     public static interface SolverListener {
         void onSolved(SolveStats stats);
+        void onLongRunningTask(SolveStats stats);
     }
 
     private static class SolveTask extends AsyncTask<CellModel, Integer, SolveStats> {
@@ -154,6 +155,9 @@ public class CellModelManager {
             {
                 if (++attempts > 1) {
                     model.resetCells();
+                    if (attempts % 800 == 0) {
+                        publishProgress(attempts);
+                    }
                 }
                 Solver solver = new Solver(model, buildComparator());
                 boolean backtrack = r.nextBoolean();
@@ -184,7 +188,22 @@ public class CellModelManager {
 
         @Override
         protected void onProgressUpdate(Integer... progress) {
+            solverListener.onLongRunningTask(new SolveStats() {
+                @Override
+                public int getAttempts() {
+                    return attempts;
+                }
 
+                @Override
+                public int getSteps() {
+                    return steps;
+                }
+
+                @Override
+                public long getElapsedTime() {
+                    return System.currentTimeMillis() - start;
+                }
+            });
         }
 
         @Override
