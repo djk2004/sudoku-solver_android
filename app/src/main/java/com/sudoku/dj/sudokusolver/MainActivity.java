@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
                             Integer id = Integer.valueOf(cell.getID());
                             TextView text = (TextView)findViewById(cellIDsToBoxIDs.get(id));
                             int value = cell.getValue();
-                            String textValue = value == 0 ? " " : ""+value;
+                            String textValue = value == 0 ? "" : ""+value;
                             text.setTextColor(cell.isLocked() ?
                                     ContextCompat.getColor(text.getContext(), android.R.color.black) :
                                     ContextCompat.getColor(text.getContext(), R.color.colorPrimaryDark));
