@@ -78,73 +78,89 @@ public class MainActivity extends AppCompatActivity {
         menu.getItem(1).setIcon(android.R.drawable.ic_media_play);
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
+    private void onBuildNewBoardClick() {
+        if (CellModelManager.isSolvingBoard()) {
+            Toast.makeText(this, "Cannot create a new board while solving the current board", Toast.LENGTH_SHORT).show();
+        } else {
+            resetSolveButtonIcon();
 
-        if (id == R.id.new_board_button) {
+            int filledCells = generateFilledCellsCount();
+            CellModelManager.buildNewBoard(filledCells);
+        }
+    }
+
+    private void onSolveClick(MenuItem item) {
+        try {
             if (CellModelManager.isSolvingBoard()) {
-                Toast.makeText(this, "Cannot create a new board while solving the current board", Toast.LENGTH_SHORT).show();
+                item.setIcon(android.R.drawable.ic_media_play);
+                CellModelManager.cancelSolve();
             } else {
-                resetSolveButtonIcon();
+                item.setIcon(android.R.drawable.ic_media_pause);
 
-                int filledCells = generateFilledCellsCount();
-                CellModelManager.buildNewBoard(filledCells);
-            }
-        } else if (id == R.id.solve_board_button && !CellModelManager.getInstance().isSolved()) {
-            try {
-                if (CellModelManager.isSolvingBoard()) {
-                    item.setIcon(android.R.drawable.ic_media_play);
-                    CellModelManager.cancelSolve();
-                } else {
-                    item.setIcon(android.R.drawable.ic_media_pause);
-
-                    final MainActivity activity = this;
-                    CellModelManager.solve(new CellModelManager.SolverListener() {
-                        @Override
-                        public void onSolved(CellModelManager.SolveStats stats) {
-                            if (activity.isDestroyed() || activity.isFinishing()) {
-                                return;
-                            }
-                            activity.resetSolveButtonIcon();
-
-                            SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
-                            StringBuilder builder = new StringBuilder();
-                            builder.append("Solved in "+df.format(new Date(stats.getElapsedTime())));
-                            builder.append(" in "+stats.getSteps()+" steps");
-                            builder.append(" with "+stats.getAttempts()+" attempts");
-                            Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
+                final MainActivity activity = this;
+                CellModelManager.solve(new CellModelManager.SolverListener() {
+                    @Override
+                    public void onSolved(CellModelManager.SolveStats stats) {
+                        if (activity.isDestroyed() || activity.isFinishing()) {
+                            return;
                         }
-                    });
-                }
-            } catch (Exception e) {
-                Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        activity.resetSolveButtonIcon();
+
+                        SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
+                        StringBuilder builder = new StringBuilder();
+                        builder.append("Solved in "+df.format(new Date(stats.getElapsedTime())));
+                        builder.append(" in "+stats.getSteps()+" steps");
+                        builder.append(" with "+stats.getAttempts()+" attempts");
+                        Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
+                    }
+                });
             }
-        } else if (id == R.id.reset_board_button) {
-            if (CellModelManager.isSolvingBoard()) {
-                Toast.makeText(this, "Cannot reset board while solving", Toast.LENGTH_SHORT).show();
-            } else {
-                CellModelManager.getInstance().resetCells();
-            }
-        } else if (id == R.id.about_app) {
-            String message = new StringBuilder()
+        } catch (Exception e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void onResetClick() {
+        if (CellModelManager.isSolvingBoard()) {
+            Toast.makeText(this, "Cannot reset board while solving", Toast.LENGTH_SHORT).show();
+        } else {
+            CellModelManager.getInstance().resetCells();
+        }
+    }
+
+    private void onAboutClick() {
+        String message = new StringBuilder()
                 .append("by DJ Kwiatkowski, June 2018\n\n")
                 .append("Image Sources: \n")
                 .append("Material Icons, Apache 2.0\n")
                 .append("Oxygen Icon Team, LGPL\n")
                 .append("Pixabay, CC0 Creative Commons")
                 .toString();
-            AlertDialog dialog = new AlertDialog.Builder(this).create();
-            dialog.setTitle("About Sudoku Solver");
-            dialog.setMessage(message);
-            dialog.setIcon(R.mipmap.ksudoku_icon);
-            dialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
-            dialog.show();
+        AlertDialog dialog = new AlertDialog.Builder(this).create();
+        dialog.setTitle("About Sudoku Solver");
+        dialog.setMessage(message);
+        dialog.setIcon(R.mipmap.ksudoku_icon);
+        dialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.new_board_button) {
+            onBuildNewBoardClick();
+        } else if (id == R.id.solve_board_button && !CellModelManager.getInstance().isSolved()) {
+            onSolveClick(item);
+        } else if (id == R.id.reset_board_button) {
+            onResetClick();
+        } else if (id == R.id.about_app) {
+            onAboutClick();
         }
         return super.onOptionsItemSelected(item);
     }
