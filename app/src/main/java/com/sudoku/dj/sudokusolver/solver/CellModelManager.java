@@ -7,24 +7,16 @@ import android.widget.Toast;
 import com.sudoku.dj.sudokusolver.MainActivity;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 
 public class CellModelManager {
     private static CellModel cellModel;
     private static SolveTask task;
-    private static SolverListener solverListener;
-
-    public static SolverListenerRegistration addSolverListener(SolverListener listener) {
-        solverListener = listener;
-        return new SolverListenerRegistration() {
-            @Override
-            public void unregister() {
-                solverListener = null;
-            }
-        };
-    }
+    private static AllStats allStats = new AllStats();
 
     /**
      * Instantiates the global cell model
@@ -39,9 +31,7 @@ public class CellModelManager {
         }
         Solver solver = new Solver(cellModel);
         solver.buildNewBoard(filledCells);
-        if (solverListener != null) {
-            solverListener.onCreateNewBoard();
-        }
+        allStats.clear();
         return cellModel;
     }
 
@@ -55,9 +45,7 @@ public class CellModelManager {
         CellModel.ChangeListenerRegistration reg = cellModel.addListener(listener);
         Solver solver = new Solver(cellModel);
         solver.buildNewBoard(filledCells);
-        if (solverListener != null) {
-            solverListener.onCreateNewBoard();
-        }
+        allStats.clear();
         return reg;
     }
 
@@ -79,7 +67,6 @@ public class CellModelManager {
     public static void cancelSolve() {
         if (task != null) {
             task.canCancelSolve();
-//            task.cancel(true);
         }
     }
 
@@ -95,12 +82,16 @@ public class CellModelManager {
         return task != null && task.isRunning();
     }
 
-    public static void solve() {
+    public static void solve(SolverListener solverListener) {
         if (task != null && task.isCancelled()) {
             throw new RuntimeException("Task currently running!");
         }
         task = new SolveTask(solverListener);
         task.execute(getInstance());
+    }
+
+    public static SolveStats getSolveStats() {
+        return allStats.get();
     }
 
     public static interface SolveStats {
@@ -110,14 +101,9 @@ public class CellModelManager {
     }
 
     public static interface SolverListener {
-        void onCreateNewBoard();
         void onSolved(SolveStats stats);
         void onLongRunningTask(SolveStats stats);
         void onPaused(SolveStats stats);
-    }
-
-    public static interface SolverListenerRegistration {
-        void unregister();
     }
 
     private static class SolveTask extends AsyncTask<CellModel, Integer, SolveStats> {
@@ -143,7 +129,7 @@ public class CellModelManager {
             }
             elapsed = System.currentTimeMillis() - start;
             isRunning = false;
-            return new SolveStats() {
+            SolveStats current = new SolveStats() {
                 @Override
                 public int getAttempts() {
                     return attempts;
@@ -159,6 +145,9 @@ public class CellModelManager {
                     return elapsed;
                 }
             };
+            allStats.add(current);
+            SolveStats all = allStats.get();
+            return all;
         }
 
         public boolean isRunning() {
@@ -211,22 +200,24 @@ public class CellModelManager {
 
         @Override
         protected void onProgressUpdate(Integer... progress) {
-            solverListener.onLongRunningTask(new SolveStats() {
-                @Override
-                public int getAttempts() {
-                    return attempts;
-                }
-
-                @Override
-                public int getSteps() {
-                    return steps;
-                }
-
-                @Override
-                public long getElapsedTime() {
-                    return System.currentTimeMillis() - start;
-                }
-            });
+//            allStats.add(new SolveStats() {
+//                @Override
+//                public int getAttempts() {
+//                    return attempts;
+//                }
+//
+//                @Override
+//                public int getSteps() {
+//                    return steps;
+//                }
+//
+//                @Override
+//                public long getElapsedTime() {
+//                    return System.currentTimeMillis() - start;
+//                }
+//            });
+            SolveStats all = allStats.get();
+            solverListener.onLongRunningTask(all);
         }
 
         @Override
@@ -234,12 +225,57 @@ public class CellModelManager {
             if (steps == 0) {
                 return;
             }
-
+            allStats.add(stats);
+            SolveStats all = allStats.get();
             if (canCancel) {
-                solverListener.onPaused(stats);
+                solverListener.onPaused(all);
             } else {
-                solverListener.onSolved(stats);
+                solverListener.onSolved(all);
             }
+        }
+    }
+
+    private static class AllStats {
+        private List<SolveStats> solveStatsList = new ArrayList<>();
+
+        public void clear() {
+            solveStatsList.clear();
+        }
+
+        public void add(SolveStats stats) {
+            solveStatsList.add(stats);
+        }
+
+        public SolveStats get() {
+            return new CumulativeSolveStats(solveStatsList);
+        }
+    }
+
+    private static class CumulativeSolveStats implements CellModelManager.SolveStats {
+        private int attempts, steps;
+        private long elapsed;
+
+        public CumulativeSolveStats(List<SolveStats> solveStatsList) {
+            for (CellModelManager.SolveStats s: solveStatsList) {
+                attempts += s.getAttempts();
+                steps += s.getSteps();
+                elapsed += s.getElapsedTime();
+            }
+        }
+
+        @Override
+        public int getAttempts() {
+            return attempts;
+        }
+
+        @Override
+        public int getSteps() {
+            return steps;
+        }
+
+        @Override
+        public long getElapsedTime() {
+            return elapsed;
         }
     }
 }
