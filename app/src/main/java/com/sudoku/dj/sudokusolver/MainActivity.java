@@ -95,39 +95,42 @@ public class MainActivity extends AppCompatActivity {
 
     private void onSolveClick(MenuItem item) {
         try {
+            if (CellModelManager.getInstance().isSolved()) {
+                Toast.makeText(this, "Puzzle solved!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             if (CellModelManager.isSolvingBoard()) {
                 item.setIcon(android.R.drawable.ic_media_play);
                 CellModelManager.cancelSolve();
-            } else {
-                item.setIcon(android.R.drawable.ic_media_pause);
-
-                final MainActivity activity = this;
-                CellModelManager.solve(new CellModelManager.SolverListener() {
-                    @Override
-                    public void onSolved(CellModelManager.SolveStats stats) {
-                        if (activity.isDestroyed() || activity.isFinishing()) {
-                            return;
-                        }
-                        activity.resetSolveButtonIcon();
-
-                        SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
-                        StringBuilder builder = new StringBuilder();
-                        builder.append("Solved in "+df.format(new Date(stats.getElapsedTime())));
-                        builder.append(" in "+stats.getSteps()+" steps");
-                        builder.append(" with "+stats.getAttempts()+" attempts");
-                        Toast.makeText(activity, builder.toString(), Toast.LENGTH_LONG).show();
-                    }
-
-                    @Override
-                    public void onLongRunningTask(CellModelManager.SolveStats stats) {
-                        if (activity.isDestroyed() || activity.isFinishing()) {
-                            return;
-                        }
-
-                        Toast.makeText(activity, "This puzzle may be unsolvable...", Toast.LENGTH_LONG).show();
-                    }
-                });
+                return;
             }
+
+            item.setIcon(android.R.drawable.ic_media_pause);
+            final MainActivity activity = this;
+            CellModelManager.solve(new CellModelManager.SolverListener() {
+                @Override
+                public void onSolved(CellModelManager.SolveStats stats) {
+                    if (activity.isDestroyed() || activity.isFinishing()) {
+                        return;
+                    }
+                    activity.resetSolveButtonIcon();
+
+                    SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
+                    StringBuilder builder = new StringBuilder();
+                    builder.append("Solved in "+df.format(new Date(stats.getElapsedTime())));
+                    builder.append(" in "+stats.getSteps()+" steps");
+                    Toast.makeText(activity, builder.toString(), Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onLongRunningTask(CellModelManager.SolveStats stats) {
+                    if (activity.isDestroyed() || activity.isFinishing()) {
+                        return;
+                    }
+                 Toast.makeText(activity, "This puzzle may be unsolvable...", Toast.LENGTH_SHORT).show();
+                }
+            });
         } catch (Exception e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -168,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (id == R.id.new_board_button) {
             onBuildNewBoardClick();
-        } else if (id == R.id.solve_board_button && !CellModelManager.getInstance().isSolved()) {
+        } else if (id == R.id.solve_board_button) {
             onSolveClick(item);
         } else if (id == R.id.reset_board_button) {
             onResetClick();
