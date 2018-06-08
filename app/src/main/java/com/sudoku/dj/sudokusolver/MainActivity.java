@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.sudoku.dj.sudokusolver.solver.Cell;
 import com.sudoku.dj.sudokusolver.solver.CellModel;
 import com.sudoku.dj.sudokusolver.solver.CellModelManager;
+import com.sudoku.dj.sudokusolver.solver.SolveTaskManager;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onBuildNewBoardClick() {
-        if (CellModelManager.isSolvingBoard()) {
+        if (SolveTaskManager.isSolvingBoard()) {
             Toast.makeText(this, "Cannot create a new board while solving the current board", Toast.LENGTH_SHORT).show();
         } else {
             resetSolveButtonIcon();
@@ -98,25 +99,25 @@ public class MainActivity extends AppCompatActivity {
     private void onSolveClick(MenuItem item) {
         try {
             if (CellModelManager.getInstance().isSolved()) {
-                String message = buildSolvedMessage(CellModelManager.getSolveStats());
+                String message = buildSolvedMessage(SolveTaskManager.getSolveStats());
                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            if (CellModelManager.isSolvingBoard()) {
+            if (SolveTaskManager.isSolvingBoard()) {
                 item.setIcon(android.R.drawable.ic_media_play);
-                CellModelManager.cancelSolve();
+                SolveTaskManager.cancelSolve();
                 return;
             }
 
             item.setIcon(android.R.drawable.ic_media_pause);
-            CellModelManager.solve(new SolveListenerImpl(this));
+            SolveTaskManager.solve(new SolveListenerImpl(this));
         } catch (Exception e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
-    private String buildSolvedMessage(CellModelManager.SolveStats stats) {
+    private String buildSolvedMessage(SolveTaskManager.SolveStats stats) {
         SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
         return new StringBuilder()
             .append("Solved in "+df.format(new Date(stats.getElapsedTime())))
@@ -125,10 +126,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onResetClick() {
-        if (CellModelManager.isSolvingBoard()) {
+        if (SolveTaskManager.isSolvingBoard()) {
             Toast.makeText(this, "Cannot reset board while solving", Toast.LENGTH_SHORT).show();
         } else {
             CellModelManager.getInstance().resetCells();
+            SolveTaskManager.clearAllStats();
         }
     }
 
@@ -256,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
         return Collections.unmodifiableMap(map);
     }
 
-    private static class SolveListenerImpl implements CellModelManager.SolverListener {
+    private static class SolveListenerImpl implements SolveTaskManager.SolverListener {
         private final MainActivity activity;
 
         public SolveListenerImpl(MainActivity activity) {
@@ -264,12 +266,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onPaused(CellModelManager.SolveStats stats) {
+        public void onPaused(SolveTaskManager.SolveStats stats) {
             // no-op
         }
 
         @Override
-        public void onSolved(CellModelManager.SolveStats stats) {
+        public void onSolved(SolveTaskManager.SolveStats stats) {
             if (activity.isDestroyed() || activity.isFinishing()) {
                 return;
             }
@@ -279,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onLongRunningTask(CellModelManager.SolveStats stats) {
+        public void onLongRunningTask(SolveTaskManager.SolveStats stats) {
             if (activity.isDestroyed() || activity.isFinishing()) {
                 return;
             }
