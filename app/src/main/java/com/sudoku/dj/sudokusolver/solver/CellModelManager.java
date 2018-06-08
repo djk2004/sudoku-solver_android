@@ -200,24 +200,25 @@ public class CellModelManager {
 
         @Override
         protected void onProgressUpdate(Integer... progress) {
-//            allStats.add(new SolveStats() {
-//                @Override
-//                public int getAttempts() {
-//                    return attempts;
-//                }
-//
-//                @Override
-//                public int getSteps() {
-//                    return steps;
-//                }
-//
-//                @Override
-//                public long getElapsedTime() {
-//                    return System.currentTimeMillis() - start;
-//                }
-//            });
-            SolveStats all = allStats.get();
-            solverListener.onLongRunningTask(all);
+            // this is not meant to be included in the list, instead, it is a
+            // progress update specific to this thread instance
+            SolveStats stats = new SolveStats() {
+                @Override
+                public int getAttempts() {
+                    return attempts;
+                }
+
+                @Override
+                public int getSteps() {
+                    return steps;
+                }
+
+                @Override
+                public long getElapsedTime() {
+                    return System.currentTimeMillis() - start;
+                }
+            };
+            solverListener.onLongRunningTask(stats);
         }
 
         @Override

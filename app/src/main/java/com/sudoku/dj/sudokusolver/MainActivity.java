@@ -283,7 +283,12 @@ public class MainActivity extends AppCompatActivity {
             if (activity.isDestroyed() || activity.isFinishing()) {
                 return;
             }
-            Toast.makeText(activity, "This puzzle may be unsolvable...", Toast.LENGTH_SHORT).show();
+            SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
+            String message = new StringBuilder()
+                    .append("Run time: "+df.format(new Date(stats.getElapsedTime())))
+                    .append(", this puzzle may be unsolvable...")
+                    .toString();
+            Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
         }
     }
 }
