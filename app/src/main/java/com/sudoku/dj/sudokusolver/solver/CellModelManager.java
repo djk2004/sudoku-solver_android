@@ -86,6 +86,15 @@ public class CellModelManager {
         task.execute(getInstance());
     }
 
+    public static SolveStats getSolveStats() {
+        try {
+            return (task == null) ? null : task.get();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public static interface SolveStats {
         int getAttempts();
         int getSteps();

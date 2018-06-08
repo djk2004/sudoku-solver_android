@@ -96,7 +96,8 @@ public class MainActivity extends AppCompatActivity {
     private void onSolveClick(MenuItem item) {
         try {
             if (CellModelManager.getInstance().isSolved()) {
-                Toast.makeText(this, "Puzzle solved!", Toast.LENGTH_SHORT).show();
+                String message = buildSolvedMessage(CellModelManager.getSolveStats());
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -116,11 +117,8 @@ public class MainActivity extends AppCompatActivity {
                     }
                     activity.resetSolveButtonIcon();
 
-                    SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
-                    StringBuilder builder = new StringBuilder();
-                    builder.append("Solved in "+df.format(new Date(stats.getElapsedTime())));
-                    builder.append(" in "+stats.getSteps()+" steps");
-                    Toast.makeText(activity, builder.toString(), Toast.LENGTH_SHORT).show();
+                    String message = activity.buildSolvedMessage(stats);
+                    Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
                 }
 
                 @Override
@@ -134,6 +132,14 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private String buildSolvedMessage(CellModelManager.SolveStats stats) {
+        SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
+        return new StringBuilder()
+            .append("Solved in "+df.format(new Date(stats.getElapsedTime())))
+            .append(" in "+stats.getSteps()+" steps")
+                .toString();
     }
 
     private void onResetClick() {
