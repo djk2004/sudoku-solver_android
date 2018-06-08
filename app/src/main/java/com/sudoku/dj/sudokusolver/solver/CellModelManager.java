@@ -14,6 +14,17 @@ import java.util.Random;
 public class CellModelManager {
     private static CellModel cellModel;
     private static SolveTask task;
+    private static SolverListener solverListener;
+
+    public static SolverListenerRegistration addSolverListener(SolverListener listener) {
+        solverListener = listener;
+        return new SolverListenerRegistration() {
+            @Override
+            public void unregister() {
+                solverListener = null;
+            }
+        };
+    }
 
     /**
      * Instantiates the global cell model
@@ -28,6 +39,9 @@ public class CellModelManager {
         }
         Solver solver = new Solver(cellModel);
         solver.buildNewBoard(filledCells);
+        if (solverListener != null) {
+            solverListener.onCreateNewBoard();
+        }
         return cellModel;
     }
 
@@ -41,6 +55,9 @@ public class CellModelManager {
         CellModel.ChangeListenerRegistration reg = cellModel.addListener(listener);
         Solver solver = new Solver(cellModel);
         solver.buildNewBoard(filledCells);
+        if (solverListener != null) {
+            solverListener.onCreateNewBoard();
+        }
         return reg;
     }
 
@@ -78,21 +95,12 @@ public class CellModelManager {
         return task != null && task.isRunning();
     }
 
-    public static void solve(SolverListener solverListener) {
+    public static void solve() {
         if (task != null && task.isCancelled()) {
             throw new RuntimeException("Task currently running!");
         }
         task = new SolveTask(solverListener);
         task.execute(getInstance());
-    }
-
-    public static SolveStats getSolveStats() {
-        try {
-            return (task == null) ? null : task.get();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
     }
 
     public static interface SolveStats {
@@ -102,8 +110,14 @@ public class CellModelManager {
     }
 
     public static interface SolverListener {
+        void onCreateNewBoard();
         void onSolved(SolveStats stats);
         void onLongRunningTask(SolveStats stats);
+        void onPaused(SolveStats stats);
+    }
+
+    public static interface SolverListenerRegistration {
+        void unregister();
     }
 
     private static class SolveTask extends AsyncTask<CellModel, Integer, SolveStats> {
@@ -217,11 +231,15 @@ public class CellModelManager {
 
         @Override
         protected void onPostExecute(SolveStats stats) {
-            if (canCancel || steps == 0)
-            {
+            if (steps == 0) {
                 return;
             }
-            solverListener.onSolved(stats);
+
+            if (canCancel) {
+                solverListener.onPaused(stats);
+            } else {
+                solverListener.onSolved(stats);
+            }
         }
     }
 }

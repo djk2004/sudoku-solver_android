@@ -16,9 +16,11 @@ import com.sudoku.dj.sudokusolver.solver.CellModel;
 import com.sudoku.dj.sudokusolver.solver.CellModelManager;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -27,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
     private CellModel.ChangeListenerRegistration reg;
     private Map<Integer, Integer> cellIDsToBoxIDs;
     private Menu menu;
+    private SolveListenerImpl solverListener;
+    private CellModelManager.SolverListenerRegistration solverReg;
 
     private int generateFilledCellsCount() {
         Random r = new Random(System.currentTimeMillis());
@@ -61,12 +65,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+        solverListener = new SolveListenerImpl(this);
+        solverReg = CellModelManager.addSolverListener(solverListener);
     }
 
     @Override
     protected void onDestroy() {
         if (reg != null) {
             reg.unregister();
+        }
+        if (solverReg != null) {
+            solverReg.unregister();
         }
         super.onDestroy();
     }
@@ -96,7 +106,8 @@ public class MainActivity extends AppCompatActivity {
     private void onSolveClick(MenuItem item) {
         try {
             if (CellModelManager.getInstance().isSolved()) {
-                String message = buildSolvedMessage(CellModelManager.getSolveStats());
+                String message = solverListener == null ? "Puzzle solved!" :
+                        buildSolvedMessage(solverListener.getSolverStats());
                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -108,27 +119,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             item.setIcon(android.R.drawable.ic_media_pause);
-            final MainActivity activity = this;
-            CellModelManager.solve(new CellModelManager.SolverListener() {
-                @Override
-                public void onSolved(CellModelManager.SolveStats stats) {
-                    if (activity.isDestroyed() || activity.isFinishing()) {
-                        return;
-                    }
-                    activity.resetSolveButtonIcon();
-
-                    String message = activity.buildSolvedMessage(stats);
-                    Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
-                }
-
-                @Override
-                public void onLongRunningTask(CellModelManager.SolveStats stats) {
-                    if (activity.isDestroyed() || activity.isFinishing()) {
-                        return;
-                    }
-                 Toast.makeText(activity, "This puzzle may be unsolvable...", Toast.LENGTH_SHORT).show();
-                }
-            });
+            CellModelManager.solve();
         } catch (Exception e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
@@ -272,5 +263,76 @@ public class MainActivity extends AppCompatActivity {
         map.put(Integer.valueOf(79), R.id.box79);
         map.put(Integer.valueOf(80), R.id.box80);
         return Collections.unmodifiableMap(map);
+    }
+
+    private static class SolveListenerImpl implements CellModelManager.SolverListener {
+        private final MainActivity activity;
+        private List<CellModelManager.SolveStats> solveStatsList;
+
+        public SolveListenerImpl(MainActivity activity) {
+            this.activity = activity;
+            solveStatsList = new ArrayList<>();
+        }
+
+        @Override
+        public void onCreateNewBoard() {
+            solveStatsList.clear();
+        }
+
+        @Override
+        public void onPaused(CellModelManager.SolveStats stats) {
+            solveStatsList.add(stats);
+        }
+
+        @Override
+        public void onSolved(CellModelManager.SolveStats stats) {
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return;
+            }
+            solveStatsList.add(stats);
+            activity.resetSolveButtonIcon();
+            String message = activity.buildSolvedMessage(getSolverStats());
+            Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onLongRunningTask(CellModelManager.SolveStats stats) {
+            if (activity.isDestroyed() || activity.isFinishing()) {
+                return;
+            }
+            Toast.makeText(activity, "This puzzle may be unsolvable...", Toast.LENGTH_SHORT).show();
+        }
+
+        public CellModelManager.SolveStats getSolverStats() {
+            return new CumulativeSolveStats(solveStatsList);
+        }
+    }
+
+    private static class CumulativeSolveStats implements CellModelManager.SolveStats {
+        private int attempts, steps;
+        private long elapsed;
+
+        public CumulativeSolveStats(List<CellModelManager.SolveStats> allStats) {
+            for (CellModelManager.SolveStats s: allStats) {
+                attempts += s.getAttempts();
+                steps += s.getSteps();
+                elapsed += s.getElapsedTime();
+            }
+        }
+
+        @Override
+        public int getAttempts() {
+            return attempts;
+        }
+
+        @Override
+        public int getSteps() {
+            return steps;
+        }
+
+        @Override
+        public long getElapsedTime() {
+            return elapsed;
+        }
     }
 }
