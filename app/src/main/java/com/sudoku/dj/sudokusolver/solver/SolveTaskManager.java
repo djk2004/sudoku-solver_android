@@ -3,6 +3,7 @@ package com.sudoku.dj.sudokusolver.solver;
 import android.os.AsyncTask;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
@@ -10,6 +11,19 @@ import java.util.Random;
 public class SolveTaskManager {
     private static SolveTask task;
     private static AllStats allStats = new AllStats();
+    private static final Comparator<Cell> defaultComparator = new Solver.DefaultComparator();
+    private static final List<Comparator<Cell>> comparators;
+
+    static {
+        List<Comparator<Cell>> c = new ArrayList<>();
+        c.add(new Solver.CubeGroupComparator());
+        c.add(new Solver.HorizontalGroupComparator());
+        c.add(new Solver.VerticalGroupComparator());
+        c.add(new Solver.IDComparator());
+        c.add(new Solver.MixedGroupComparator());
+        c.add(new Solver.CellGroupsComparator());
+        comparators = Collections.unmodifiableList(c);
+    }
 
     /**
      * Cancels the running solve task.
@@ -124,24 +138,15 @@ public class SolveTaskManager {
         }
 
         private Comparator<Cell> buildComparator() {
-            int strategyID = new Random(System.currentTimeMillis()).nextInt(10);
-            if (strategyID == 0) {
-                return new Solver.CubeGroupComparator();
+            int totalComparators = comparators.size();
+            int strategyID = new Random(System.currentTimeMillis()).nextInt(totalComparators * 2);
+
+            if (strategyID < totalComparators) {
+                return comparators.get(strategyID);
             }
-            if (strategyID == 1) {
-                return new Solver.HorizontalGroupComparator();
-            }
-            if (strategyID == 2) {
-                return new Solver.VerticalGroupComparator();
-            }
-            if (strategyID == 3) {
-                return new Solver.IDComparator();
-            }
-            if (strategyID == 4) {
-                return new Solver.MixedGroupComparator();
-            }
+
             // the default comparator should be more heavily weighted than the others
-            return new Solver.DefaultComparator();
+            return defaultComparator;
         }
 
         @Override

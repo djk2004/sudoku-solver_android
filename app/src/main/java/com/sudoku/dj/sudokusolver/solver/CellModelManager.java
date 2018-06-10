@@ -14,7 +14,7 @@ public class CellModelManager {
         } else {
             cellModel.resetAllCells();
         }
-        Solver solver = new Solver(cellModel);
+        Solver solver = new Solver(cellModel, new Solver.CellGroupsComparator());
         solver.buildNewBoard(filledCells);
         SolveTaskManager.clearAllStats();
         return cellModel;
@@ -28,7 +28,7 @@ public class CellModelManager {
     public static CellModel.ChangeListenerRegistration buildNewBoard(int filledCells, CellModel.ChangeListener listener) {
         cellModel = new CellModel();
         CellModel.ChangeListenerRegistration reg = cellModel.addListener(listener);
-        Solver solver = new Solver(cellModel);
+        Solver solver = new Solver(cellModel, new Solver.CellGroupsComparator());
         solver.buildNewBoard(filledCells);
         SolveTaskManager.clearAllStats();
         return reg;

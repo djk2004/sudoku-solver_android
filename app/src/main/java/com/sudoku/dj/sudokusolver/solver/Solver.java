@@ -25,10 +25,6 @@ public class Solver {
     private PriorityQueue<Cell> unfilled;
     private Deque<Cell> filled;
 
-    public Solver(CellModel model) {
-        this(model, new DefaultComparator());
-    }
-
     public Solver(CellModel model, Comparator<Cell> comparator) {
         this.model = model;
         Set<Cell> unfilledCells = buildRandomizedSet(model.getUnfilledCells());
@@ -213,6 +209,30 @@ public class Solver {
             Integer aValue = Integer.valueOf(getValue(a));
             Integer bValue = Integer.valueOf(getValue(b));
             return aValue.compareTo(bValue);
+        }
+    }
+
+    /**
+     * This comparator ranks cells based on the number of empty cells in the associated groups.
+     * Unlike the default comparator, which ranks cells based on the number of possible legal values,
+     * this comparator is looking at the number of associated cells in the group that are unfilled.
+     * A cell should rank higher using this comparator if it's horizontal, vertical, and cube groups
+     * have fewer filled cells.
+     */
+    public static class CellGroupsComparator implements Comparator<Cell> {
+
+        private int buildAvailableValuesCount(Cell c) {
+            return (CellModel.MAX_CELLS_IN_GROUP * 3) -
+                (c.getHorizontalGroup().getAvailableValues().size() +
+                c.getVerticalGroup().getAvailableValues().size() +
+                c.getCubeGroup().getAvailableValues().size());
+        }
+
+        @Override
+        public int compare(Cell a, Cell b) {
+            Integer aSize = Integer.valueOf(buildAvailableValuesCount(a));
+            Integer bSize = Integer.valueOf(buildAvailableValuesCount(b));
+            return aSize.compareTo(bSize);
         }
     }
 }
