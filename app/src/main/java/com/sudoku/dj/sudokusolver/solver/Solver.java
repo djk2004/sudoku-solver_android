@@ -61,18 +61,16 @@ public class Solver {
      *       - The queue runs out of cells.  If this happens, the puzzle is complete, or, 
      *       - The puzzle is not solveable with the current cell values.  The algorithm has
      *         hit a dead end.
-     * @param allowBacktracking When true, the algorithm will attempt to backtrack when necessary.
-     *                          Backtracking does not necessarily allow the puzzle to be solved faster.
      * @return The number of steps taken in the attempt to solve the puzzle.
      */
-    public int solve(boolean allowBacktracking) {
+    public int solve() {
         Cell current;
         int steps = 0;
         boolean runLoop = true;
         Random r = new Random(System.currentTimeMillis());
         while (runLoop && (current = unfilled.poll()) != null) {
             Set<Integer> originalSet = current.getAvailableValues();
-            if (allowBacktracking && originalSet.isEmpty()) {
+            if (originalSet.isEmpty()) {
                 if (!filled.isEmpty()) {
                     // to backtrack: choose a random number of cells, in reverse order that values
                     // were set, and reset them to 0, then add back to the queue
@@ -98,7 +96,7 @@ public class Solver {
                 if (filled.isEmpty()) {
                     runLoop = false;
                 } else {
-                    doBacktrack(r);
+//                    doBacktrack(r);
                 }
             }
         }

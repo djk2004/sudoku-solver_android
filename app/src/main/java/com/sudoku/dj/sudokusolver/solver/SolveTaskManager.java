@@ -12,18 +12,18 @@ public class SolveTaskManager {
     private static SolveTask task;
     private static AllStats allStats = new AllStats();
     private static final Comparator<Cell> defaultComparator = new Solver.DefaultComparator();
-    private static final List<Comparator<Cell>> comparators;
+//    private static final List<Comparator<Cell>> comparators;
 
-    static {
-        List<Comparator<Cell>> c = new ArrayList<>();
-        c.add(new Solver.CubeGroupComparator());
-        c.add(new Solver.HorizontalGroupComparator());
-        c.add(new Solver.VerticalGroupComparator());
-        c.add(new Solver.IDComparator());
-        c.add(new Solver.MixedGroupComparator());
-        c.add(new Solver.CellGroupsComparator());
-        comparators = Collections.unmodifiableList(c);
-    }
+//    static {
+//        List<Comparator<Cell>> c = new ArrayList<>();
+//        c.add(new Solver.CubeGroupComparator());
+//        c.add(new Solver.HorizontalGroupComparator());
+//        c.add(new Solver.VerticalGroupComparator());
+//        c.add(new Solver.IDComparator());
+//        c.add(new Solver.MixedGroupComparator());
+//        c.add(new Solver.CellGroupsComparator());
+//        comparators = Collections.unmodifiableList(c);
+//    }
 
     /**
      * Cancels the running solve task.
@@ -122,28 +122,26 @@ public class SolveTaskManager {
             attempts = 0;
             steps = 0;
             canCancel = false;
-            Random r = new Random(start);
             do
             {
                 if (++attempts > 1) {
                     model.resetCells();
-                    if (attempts % 800 == 0) {
+                    if (attempts % 1000 == 0) {
                         publishProgress(attempts);
                     }
                 }
                 Solver solver = new Solver(model, buildComparator());
-                boolean backtrack = r.nextBoolean();
-                steps += solver.solve(backtrack);
+                steps += solver.solve();
             } while (!model.isSolveable() && !canCancel);
         }
 
         private Comparator<Cell> buildComparator() {
-            int totalComparators = comparators.size();
-            int strategyID = new Random(System.currentTimeMillis()).nextInt(totalComparators * 2);
-
-            if (strategyID < totalComparators) {
-                return comparators.get(strategyID);
-            }
+//            int totalComparators = comparators.size();
+//            int strategyID = new Random(System.currentTimeMillis()).nextInt(totalComparators * 2);
+//
+//            if (strategyID < totalComparators) {
+//                return comparators.get(strategyID);
+//            }
 
             // the default comparator should be more heavily weighted than the others
             return defaultComparator;

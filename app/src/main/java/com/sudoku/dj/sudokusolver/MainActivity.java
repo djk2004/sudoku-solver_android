@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int generateFilledCellsCount() {
         Random r = new Random(System.currentTimeMillis());
-        return r.nextInt(15) + 15;
+        return r.nextInt(15) + 17;
     }
 
     @Override
