@@ -1,5 +1,9 @@
 package com.sudoku.dj.sudokusolver.solver;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Comparator;
@@ -23,15 +27,34 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class Solver {
     private CellModel model;
-    private PriorityQueue<Cell> unfilled;
-    private Deque<Cell> filled;
+    private PriorityQueue<InternalCell> unfilled;
+    private Deque<InternalCell> filled;
 
-    public Solver(CellModel model, Comparator<Cell> comparator) {
+    public static enum SolverType { BOARD_BUILDER, BACKTRACKING };
+
+    private static Map<SolverType, Comparator<InternalCell>> comparators;
+
+    static {
+        Map<SolverType, Comparator<InternalCell>> m = new HashMap<>();
+        m.put(SolverType.BOARD_BUILDER, new CellGroupsComparator());
+        m.put(SolverType.BACKTRACKING, new DefaultComparator());
+        comparators = Collections.unmodifiableMap(m);
+    }
+
+    public Solver(CellModel model, SolverType type) {
         this.model = model;
-        Set<Cell> unfilledCells = buildRandomizedSet(model.getUnfilledCells());
-        this.unfilled = new PriorityQueue<>(unfilledCells.size(), comparator);
+        Set<InternalCell> unfilledCells = buildCellSet(model.getUnfilledCells());
+        this.unfilled = new PriorityQueue<>(unfilledCells.size(), comparators.get(type));
         this.unfilled.addAll(unfilledCells);
         this.filled = new ArrayDeque<>();
+    }
+
+    private Set<InternalCell> buildCellSet(Collection<Cell> cells) {
+        Set<InternalCell> internals = new HashSet<>();
+        for (Cell c: cells) {
+            internals.add(new InternalCell(c));
+        }
+        return internals;
     }
 
     private <T> Set<T> buildRandomizedSet(Collection<T> original) {
@@ -65,19 +88,20 @@ public class Solver {
      * @return The number of steps taken in the attempt to solve the puzzle.
      */
     public int solve(AtomicBoolean canCancel) {
-        Cell current;
+        InternalCell current;
         int steps = 0;
         Random r = new Random(System.currentTimeMillis());
         while (!canCancel.get() && (current = unfilled.poll()) != null) {
             // always add the current cell to the filled stack first
             filled.addFirst(current);
+            current.addVisit();
             steps++;
 
-            Set<Integer> originalSet = current.getAvailableValues();
+            Set<Integer> originalSet = current.getCell().getAvailableValues();
             if (originalSet.isEmpty()) {
                 // to backtrack: choose a random number of cells, in reverse order that values
                 // were set, and reset them to 0, then add back to the queue
-                doBacktrack(r);
+                doBacktrack(r.nextInt(filled.size()));
             } else {
                 // for the current cell, randomly choose any available value
                 // then if the puzzle is solveable, add the cell to the filled stack
@@ -85,7 +109,7 @@ public class Solver {
                 boolean solveableValueFound = false;
                 Set<Integer> availableValues = buildRandomizedSet(originalSet);
                 for (Integer value: availableValues) {
-                    model.setValue(current, value);
+                    model.setValue(current.getCell(), value);
                     if (model.isSolveable()) {
                         // accept the first legal value
                         solveableValueFound = true;
@@ -93,20 +117,18 @@ public class Solver {
                     }
                 }
 
-                // backtrack if none of the available values will produce a solveable board
                 if (!solveableValueFound) {
-                    doBacktrack(r);
+                    doBacktrack(r.nextInt(filled.size()));
                 }
             }
         }
         return steps;
     }
 
-    private void doBacktrack(Random r) {
-        int totalToBacktrack = r.nextInt(filled.size());
+    private void doBacktrack(int totalToBacktrack) {
         for (int i=0; i<totalToBacktrack; i++) {
-            Cell back = filled.removeFirst();
-            model.resetValue(back);
+            InternalCell back = filled.removeFirst();
+            model.resetValue(back.getCell());
             unfilled.add(back);
         }
     }
@@ -122,19 +144,21 @@ public class Solver {
             throw new RuntimeException("Cell model must be empty to generate a new board");
         }
 
-        Cell current;
+        InternalCell internal;
         int cellCount = 0;
-        while (cellCount < filledCells && (current = unfilled.poll()) != null) {
+        while (cellCount < filledCells && (internal = unfilled.poll()) != null) {
+            internal.addVisit();
+            Cell current = internal.getCell();
             Set<Integer> availableValues = buildRandomizedSet(current.getAvailableValues());
             for (Integer value: availableValues) {
                 model.setValue(current, value);
                 if (model.isSolveable()) {
-                    filled.addFirst(current);
+                    filled.addFirst(internal);
                     cellCount++;
                     break;
                 } else {
                     model.resetValue(current);
-                    unfilled.add(current);
+                    unfilled.add(internal);
 
                     // Forces the loop to end with the current board, which should be solveable
                     // at this point.  This is important because the board creation process
@@ -148,69 +172,12 @@ public class Solver {
         model.lockFilledCells();
     }
 
-    public static class DefaultComparator implements Comparator<Cell> {
+    private static class DefaultComparator implements Comparator<InternalCell> {
         @Override
-        public int compare(Cell a, Cell b) {
-            Integer aSize = Integer.valueOf(a.getAvailableValues().size());
-            Integer bSize = Integer.valueOf(b.getAvailableValues().size());
+        public int compare(InternalCell a, InternalCell b) {
+            Integer aSize = Integer.valueOf(a.getCell().getAvailableValues().size() + a.getVisits());
+            Integer bSize = Integer.valueOf(b.getCell().getAvailableValues().size() + b.getVisits());
             return aSize.compareTo(bSize);
-        }
-    }
-
-    public static class HorizontalGroupComparator implements Comparator<Cell> {
-        @Override
-        public int compare(Cell a, Cell b) {
-            Integer aSize = Integer.valueOf(a.getHorizontalGroup().getAvailableValues().size());
-            Integer bSize = Integer.valueOf(b.getHorizontalGroup().getAvailableValues().size());
-            return aSize.compareTo(bSize);
-        }
-    }
-
-    public static class VerticalGroupComparator implements Comparator<Cell> {
-        @Override
-        public int compare(Cell a, Cell b) {
-            Integer aSize = Integer.valueOf(a.getVerticalGroup().getAvailableValues().size());
-            Integer bSize = Integer.valueOf(b.getVerticalGroup().getAvailableValues().size());
-            return aSize.compareTo(bSize);
-        }
-    }
-
-    public static class CubeGroupComparator implements Comparator<Cell> {
-        @Override
-        public int compare(Cell a, Cell b) {
-            Integer aSize = Integer.valueOf(a.getCubeGroup().getAvailableValues().size());
-            Integer bSize = Integer.valueOf(b.getCubeGroup().getAvailableValues().size());
-            return aSize.compareTo(bSize);
-        }
-    }
-
-    public static class IDComparator implements Comparator<Cell> {
-        @Override
-        public int compare(Cell a, Cell b) {
-            Integer aSize = Integer.valueOf(a.getID());
-            Integer bSize = Integer.valueOf(b.getID());
-            return aSize.compareTo(bSize);
-        }
-    }
-
-    public static class MixedGroupComparator implements Comparator<Cell> {
-
-        private int getValue(Cell cell) {
-            int id = cell.getID();
-            if (id % 3 == 0) {
-                return cell.getCubeGroup().getAvailableValues().size();
-            }
-            if (id % 2 == 0) {
-                return cell.getVerticalGroup().getAvailableValues().size();
-            }
-            return cell.getHorizontalGroup().getAvailableValues().size();
-        }
-
-        @Override
-        public int compare(Cell a, Cell b) {
-            Integer aValue = Integer.valueOf(getValue(a));
-            Integer bValue = Integer.valueOf(getValue(b));
-            return aValue.compareTo(bValue);
         }
     }
 
@@ -221,7 +188,7 @@ public class Solver {
      * A cell should rank higher using this comparator if it's horizontal, vertical, and cube groups
      * have fewer filled cells.
      */
-    public static class CellGroupsComparator implements Comparator<Cell> {
+    private static class CellGroupsComparator implements Comparator<InternalCell> {
 
         private int buildAvailableValuesCount(Cell c) {
             return (CellModel.MAX_CELLS_IN_GROUP * 3) -
@@ -231,10 +198,89 @@ public class Solver {
         }
 
         @Override
-        public int compare(Cell a, Cell b) {
-            Integer aSize = Integer.valueOf(buildAvailableValuesCount(a));
-            Integer bSize = Integer.valueOf(buildAvailableValuesCount(b));
+        public int compare(InternalCell a, InternalCell b) {
+            Integer aSize = Integer.valueOf(buildAvailableValuesCount(a.getCell()) + a.getVisits());
+            Integer bSize = Integer.valueOf(buildAvailableValuesCount(b.getCell()) + b.getVisits());
             return aSize.compareTo(bSize);
         }
     }
+
+    private static class InternalCell {
+        private final Cell cell;
+        private int visits;
+
+        public InternalCell(Cell cell) {
+            this.cell = cell;
+            visits = 0;
+        }
+
+        public void addVisit() {
+            visits++;
+        }
+
+        public int getVisits() {
+            return visits;
+        }
+
+        public Cell getCell() {
+            return cell;
+        }
+    }
+
+//    public static class HorizontalGroupComparator implements Comparator<Cell> {
+//        @Override
+//        public int compare(Cell a, Cell b) {
+//            Integer aSize = Integer.valueOf(a.getHorizontalGroup().getAvailableValues().size());
+//            Integer bSize = Integer.valueOf(b.getHorizontalGroup().getAvailableValues().size());
+//            return aSize.compareTo(bSize);
+//        }
+//    }
+//
+//    public static class VerticalGroupComparator implements Comparator<Cell> {
+//        @Override
+//        public int compare(Cell a, Cell b) {
+//            Integer aSize = Integer.valueOf(a.getVerticalGroup().getAvailableValues().size());
+//            Integer bSize = Integer.valueOf(b.getVerticalGroup().getAvailableValues().size());
+//            return aSize.compareTo(bSize);
+//        }
+//    }
+//
+//    public static class CubeGroupComparator implements Comparator<Cell> {
+//        @Override
+//        public int compare(Cell a, Cell b) {
+//            Integer aSize = Integer.valueOf(a.getCubeGroup().getAvailableValues().size());
+//            Integer bSize = Integer.valueOf(b.getCubeGroup().getAvailableValues().size());
+//            return aSize.compareTo(bSize);
+//        }
+//    }
+//
+//    public static class IDComparator implements Comparator<Cell> {
+//        @Override
+//        public int compare(Cell a, Cell b) {
+//            Integer aSize = Integer.valueOf(a.getID());
+//            Integer bSize = Integer.valueOf(b.getID());
+//            return aSize.compareTo(bSize);
+//        }
+//    }
+//
+//    public static class MixedGroupComparator implements Comparator<Cell> {
+//
+//        private int getValue(Cell cell) {
+//            int id = cell.getID();
+//            if (id % 3 == 0) {
+//                return cell.getCubeGroup().getAvailableValues().size();
+//            }
+//            if (id % 2 == 0) {
+//                return cell.getVerticalGroup().getAvailableValues().size();
+//            }
+//            return cell.getHorizontalGroup().getAvailableValues().size();
+//        }
+//
+//        @Override
+//        public int compare(Cell a, Cell b) {
+//            Integer aValue = Integer.valueOf(getValue(a));
+//            Integer bValue = Integer.valueOf(getValue(b));
+//            return aValue.compareTo(bValue);
+//        }
+//    }
 }

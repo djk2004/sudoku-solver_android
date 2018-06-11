@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SolveTaskManager {
     private static SolveTask task;
     private static AllStats allStats = new AllStats();
-    private static final Comparator<Cell> defaultComparator = new Solver.DefaultComparator();
+//    private static final Comparator<Cell> defaultComparator = new Solver.DefaultComparator();
 //    private static final List<Comparator<Cell>> comparators;
 
 //    static {
@@ -132,22 +132,22 @@ public class SolveTaskManager {
                         publishProgress(attempts);
                     }
                 }
-                Solver solver = new Solver(model, buildComparator());
+                Solver solver = new Solver(model, Solver.SolverType.BACKTRACKING);
                 steps += solver.solve(canCancel);
             } while (!model.isSolveable() && !canCancel.get());
         }
 
-        private Comparator<Cell> buildComparator() {
+//        private Comparator<Cell> buildComparator() {
 //            int totalComparators = comparators.size();
 //            int strategyID = new Random(System.currentTimeMillis()).nextInt(totalComparators * 2);
 //
 //            if (strategyID < totalComparators) {
 //                return comparators.get(strategyID);
 //            }
-
-            // the default comparator should be more heavily weighted than the others
-            return defaultComparator;
-        }
+//
+//            // the default comparator should be more heavily weighted than the others
+//            return defaultComparator;
+//        }
 
         @Override
         protected void onProgressUpdate(Integer... progress) {
