@@ -1,8 +1,5 @@
 package com.sudoku.dj.sudokusolver.solver;
 
-import java.util.Comparator;
-import java.util.Random;
-
 public class CellModelManager {
     private static CellModel cellModel;
 

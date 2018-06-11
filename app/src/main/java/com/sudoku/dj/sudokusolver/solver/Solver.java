@@ -8,6 +8,7 @@ import java.util.TreeSet;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.ArrayDeque;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The Solver contains logic to produce a solution to the provided Sudoku cell model.  For
@@ -63,40 +64,38 @@ public class Solver {
      *         hit a dead end.
      * @return The number of steps taken in the attempt to solve the puzzle.
      */
-    public int solve() {
+    public int solve(AtomicBoolean canCancel) {
         Cell current;
         int steps = 0;
-        boolean runLoop = true;
         Random r = new Random(System.currentTimeMillis());
-        while (runLoop && (current = unfilled.poll()) != null) {
+        while (!canCancel.get() && (current = unfilled.poll()) != null) {
+            // always add the current cell to the filled stack first
+            filled.addFirst(current);
+            steps++;
+
             Set<Integer> originalSet = current.getAvailableValues();
             if (originalSet.isEmpty()) {
-                if (!filled.isEmpty()) {
-                    // to backtrack: choose a random number of cells, in reverse order that values
-                    // were set, and reset them to 0, then add back to the queue
-                    doBacktrack(r);
-                }
+                // to backtrack: choose a random number of cells, in reverse order that values
+                // were set, and reset them to 0, then add back to the queue
+                doBacktrack(r);
             } else {
                 // for the current cell, randomly choose any available value
                 // then if the puzzle is solveable, add the cell to the filled stack
                 // and continue iterating through the queue
+                boolean solveableValueFound = false;
                 Set<Integer> availableValues = buildRandomizedSet(originalSet);
                 for (Integer value: availableValues) {
                     model.setValue(current, value);
                     if (model.isSolveable()) {
-                        steps++;
-                        filled.addFirst(current);
+                        // accept the first legal value
+                        solveableValueFound = true;
                         break;
                     }
                 }
-            }
 
-            // final check to ensure the model is still solvable
-            if (!model.isSolveable()) {
-                if (filled.isEmpty()) {
-                    runLoop = false;
-                } else {
-//                    doBacktrack(r);
+                // backtrack if none of the available values will produce a solveable board
+                if (!solveableValueFound) {
+                    doBacktrack(r);
                 }
             }
         }

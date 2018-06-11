@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SolveTaskManager {
     private static SolveTask task;
@@ -69,7 +70,8 @@ public class SolveTaskManager {
     private static class SolveTask extends AsyncTask<CellModel, Integer, SolveStats> {
         private int attempts, steps;
         private long start, elapsed;
-        private boolean canCancel, isRunning = false;
+        private AtomicBoolean isRunning = new AtomicBoolean(false);
+        private AtomicBoolean canCancel = new AtomicBoolean(false);
 
         private final SolverListener solverListener;
 
@@ -79,7 +81,7 @@ public class SolveTaskManager {
 
         @Override
         protected SolveStats doInBackground(CellModel... models) {
-            isRunning = true;
+            isRunning.set(true);
             start = System.currentTimeMillis();
             try {
                 CellModel model = models[0];
@@ -88,7 +90,7 @@ public class SolveTaskManager {
                 e.printStackTrace();
             }
             elapsed = System.currentTimeMillis() - start;
-            isRunning = false;
+            isRunning.set(false);
             SolveStats current = new SolveStats() {
                 @Override
                 public int getAttempts() {
@@ -111,17 +113,17 @@ public class SolveTaskManager {
         }
 
         public boolean isRunning() {
-            return isRunning;
+            return isRunning.get();
         }
 
         public void canCancelSolve() {
-            canCancel = true;
+            canCancel.set(true);
         }
 
         private void solve(CellModel model) {
             attempts = 0;
             steps = 0;
-            canCancel = false;
+            canCancel.set(false);
             do
             {
                 if (++attempts > 1) {
@@ -131,8 +133,8 @@ public class SolveTaskManager {
                     }
                 }
                 Solver solver = new Solver(model, buildComparator());
-                steps += solver.solve();
-            } while (!model.isSolveable() && !canCancel);
+                steps += solver.solve(canCancel);
+            } while (!model.isSolveable() && !canCancel.get());
         }
 
         private Comparator<Cell> buildComparator() {
@@ -177,7 +179,7 @@ public class SolveTaskManager {
             }
             allStats.add(stats);
             SolveStats all = allStats.get();
-            if (canCancel) {
+            if (canCancel.get()) {
                 solverListener.onPaused(all);
             } else {
                 solverListener.onSolved(all);

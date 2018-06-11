@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The memory representation of the Sudoku board.
@@ -293,44 +295,44 @@ public class CellModel {
 
     private class CellImpl implements Cell {
         private final int id, horizontalID, verticalID, cubeID;
-        private boolean isImmutable;
-        private int value;
+        private AtomicBoolean isImmutable;
+        private AtomicInteger value;
 
         public CellImpl(int id, int value) {
             this.id = id;
-            this.value = value;
-            this.isImmutable = value > NO_VALUE;
+            this.value = new AtomicInteger(value);
+            this.isImmutable = new AtomicBoolean(value > NO_VALUE);
             this.horizontalID = id / MAX_CELLS_IN_GROUP;
             this.verticalID = id % MAX_CELLS_IN_GROUP;
             this.cubeID = ((horizontalID / MAX_CELLS_IN_CUBE) * MAX_CELLS_IN_CUBE) + (verticalID / MAX_CELLS_IN_CUBE);
         }
 
         public void lockCell() {
-            isImmutable = true;
+            isImmutable.set(true);
         }
 
         public void unlockCell() {
-            isImmutable = false;
+            isImmutable.set(false);
         }
 
         /**
          * Sets the cell value if the cell can be modified.
          */
         public void setValue(int value) {
-            if (this.isImmutable) {
+            if (this.isImmutable.get()) {
                 throw new UnsupportedOperationException("Attempted to alter immutable cell value ["+this.value+"]");
             }
-            this.value = value;
+            this.value.set(value);
         }
 
         @Override
         public boolean isLocked() {
-            return isImmutable;
+            return isImmutable.get();
         }
 
         @Override
         public int getValue() {
-            return value;
+            return value.get();
         }
 
         @Override
@@ -355,7 +357,7 @@ public class CellModel {
 
         @Override
         public Set<Integer> getAvailableValues() {
-            if (isImmutable) {
+            if (isImmutable.get()) {
                 return Collections.emptySet();
             }
             Set<Integer> available = new HashSet<>();

@@ -1,6 +1,5 @@
 package com.sudoku.dj.sudokusolver;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.support.v4.content.ContextCompat;
@@ -17,11 +16,9 @@ import com.sudoku.dj.sudokusolver.solver.CellModelManager;
 import com.sudoku.dj.sudokusolver.solver.SolveTaskManager;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
