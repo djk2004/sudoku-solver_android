@@ -67,24 +67,16 @@ public class Solver {
      */
     public int solve(boolean allowBacktracking) {
         Cell current;
-        boolean runLoop = true;
         int steps = 0;
+        boolean runLoop = true;
         Random r = new Random(System.currentTimeMillis());
         while (runLoop && (current = unfilled.poll()) != null) {
             Set<Integer> originalSet = current.getAvailableValues();
             if (allowBacktracking && originalSet.isEmpty()) {
-                if (filled.isEmpty()) {
-                    // the puzzle is in a state where it cannot be solved, so end the loop
-                    runLoop = false;
-                } else {
+                if (!filled.isEmpty()) {
                     // to backtrack: choose a random number of cells, in reverse order that values
                     // were set, and reset them to 0, then add back to the queue
-                    int totalToBacktrack = r.nextInt(filled.size() - 1) + 1;
-                    for (int i=0; i<totalToBacktrack; i++) {
-                        Cell back = filled.removeFirst();
-                        model.resetValue(back);
-                        unfilled.add(back);
-                    }
+                    doBacktrack(r);
                 }
             } else {
                 // for the current cell, randomly choose any available value
@@ -101,12 +93,25 @@ public class Solver {
                 }
             }
 
-            // final check to ensure the model is still solveable, if this fails then end the loop
+            // final check to ensure the model is still solvable
             if (!model.isSolveable()) {
-                runLoop = false;
+                if (filled.isEmpty()) {
+                    runLoop = false;
+                } else {
+                    doBacktrack(r);
+                }
             }
         }
         return steps;
+    }
+
+    private void doBacktrack(Random r) {
+        int totalToBacktrack = r.nextInt(filled.size());
+        for (int i=0; i<totalToBacktrack; i++) {
+            Cell back = filled.removeFirst();
+            model.resetValue(back);
+            unfilled.add(back);
+        }
     }
 
     /**

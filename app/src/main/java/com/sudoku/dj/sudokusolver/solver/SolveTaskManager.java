@@ -85,7 +85,7 @@ public class SolveTaskManager {
                 CellModel model = models[0];
                 solve(model);
             } catch (Exception e) {
-                System.err.println("Exception caught ["+e.getMessage()+"], probably due to cancelled task");
+                e.printStackTrace();
             }
             elapsed = System.currentTimeMillis() - start;
             isRunning = false;
