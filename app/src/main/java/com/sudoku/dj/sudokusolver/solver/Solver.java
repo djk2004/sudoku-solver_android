@@ -144,30 +144,18 @@ public class Solver {
             throw new RuntimeException("Cell model must be empty to generate a new board");
         }
 
+        // HACK: get a filled board from the database
+        String board = "412956738796328541853417296928765413674132859531849672289571364367294185145683927";
+
         InternalCell internal;
         int cellCount = 0;
         while (cellCount < filledCells && (internal = unfilled.poll()) != null) {
             internal.addVisit();
             Cell current = internal.getCell();
-            Set<Integer> availableValues = buildRandomizedSet(current.getAvailableValues());
-            for (Integer value: availableValues) {
-                model.setValue(current, value);
-                if (model.isSolveable()) {
-                    filled.addFirst(internal);
-                    cellCount++;
-                    break;
-                } else {
-                    model.resetValue(current);
-                    unfilled.add(internal);
-
-                    // Forces the loop to end with the current board, which should be solveable
-                    // at this point.  This is important because the board creation process
-                    // should be very fast, otherwise this process must move into a background task.
-                    // Ideally, this loop should iterate no more than about 30-35 times, once for
-                    // each filled cell in the board.
-                    cellCount = filledCells;
-                }
-            }
+            int value = Integer.valueOf(""+board.charAt(current.getID()));
+            model.setValue(current, value);
+            filled.addFirst(internal);
+            cellCount++;
         }
         model.lockFilledCells();
     }
