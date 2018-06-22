@@ -1,8 +1,10 @@
 package com.sudoku.dj.sudokusolver.solver;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
@@ -145,7 +147,8 @@ public class Solver {
         }
 
         // HACK: get a filled board from the database
-        String board = "412956738796328541853417296928765413674132859531849672289571364367294185145683927";
+        String mask = "ABCDEFGHIGDFHCIEABIEHABGCDFDCIGFEABHFGABHCIEDEHBIADFGCCIDEGBHFAHFGCDABIEBAEFIHDCG";
+        String board = buildFilledBoard(mask);
 
         InternalCell internal;
         int cellCount = 0;
@@ -158,6 +161,22 @@ public class Solver {
             cellCount++;
         }
         model.lockFilledCells();
+    }
+
+    private String buildFilledBoard(String mask) {
+        // build a set containing all available values
+        List<Integer> available = new ArrayList<>();
+        for (int i=1; i<=CellModel.MAX_CELLS_IN_GROUP; i++) {
+            available.add(Integer.valueOf(i));
+        }
+
+        Random r = new Random(System.currentTimeMillis());
+        String board = new String(mask);
+        for (char ch = 'A'; ch < 'J'; ch++) {
+            Integer value = available.remove(r.nextInt(available.size()));
+            board = board.replaceAll(""+ch, value.toString());
+        }
+        return board;
     }
 
     private static class DefaultComparator implements Comparator<InternalCell> {
