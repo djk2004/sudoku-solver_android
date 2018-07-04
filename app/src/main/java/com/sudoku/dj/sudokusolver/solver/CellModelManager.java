@@ -14,10 +14,13 @@ public class CellModelManager {
         } else {
             cellModel.resetAllCells();
         }
-        Solver solver = new Solver(cellModel, Solver.SolverType.BOARD_BUILDER);
-        solver.buildNewBoard(filledCells);
+        BoardGenerator.buildSolvedBoard(filledCells, cellModel);
         SolveTaskManager.clearAllStats();
         return cellModel;
+    }
+
+    public static boolean isNewBoardTaskRunning() {
+        return BoardGenerator.isNewBoardTaskRunning();
     }
 
     /**
@@ -28,8 +31,7 @@ public class CellModelManager {
     public static CellModel.ChangeListenerRegistration buildNewBoard(int filledCells, CellModel.ChangeListener listener) {
         cellModel = new CellModel();
         CellModel.ChangeListenerRegistration reg = cellModel.addListener(listener);
-        Solver solver = new Solver(cellModel, Solver.SolverType.BOARD_BUILDER);
-        solver.buildNewBoard(filledCells);
+        BoardGenerator.buildSolvedBoard(filledCells, cellModel);
         SolveTaskManager.clearAllStats();
         return reg;
     }

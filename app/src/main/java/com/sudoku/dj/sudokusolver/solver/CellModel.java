@@ -140,6 +140,10 @@ public class CellModel {
         }
     }
 
+    public Cell getCell(int id) {
+        return cells.get(id);
+    }
+
     /**
      * Clears the cell value.
      */

@@ -135,34 +135,6 @@ public class Solver {
         }
     }
 
-    /**
-     * Creates a board that fills no more than the specified number of cells.  If a board becomes
-     * unsolveable, then this will backtrack only one step to return the board with the last solveable
-     * state.
-     * @param filledCells
-     */
-    public void buildNewBoard(int filledCells) {
-        if (!model.isEmptyBoard()) {
-            throw new RuntimeException("Cell model must be empty to generate a new board");
-        }
-
-        // HACK: get a filled board from the database
-        String mask = "ABCDEFGHIGDFHCIEABIEHABGCDFDCIGFEABHFGABHCIEDEHBIADFGCCIDEGBHFAHFGCDABIEBAEFIHDCG";
-        String board = buildFilledBoard(mask);
-
-        InternalCell internal;
-        int cellCount = 0;
-        while (cellCount < filledCells && (internal = unfilled.poll()) != null) {
-            internal.addVisit();
-            Cell current = internal.getCell();
-            int value = Integer.valueOf(""+board.charAt(current.getID()));
-            model.setValue(current, value);
-            filled.addFirst(internal);
-            cellCount++;
-        }
-        model.lockFilledCells();
-    }
-
     private String buildFilledBoard(String mask) {
         // build a set containing all available values
         List<Integer> available = new ArrayList<>();

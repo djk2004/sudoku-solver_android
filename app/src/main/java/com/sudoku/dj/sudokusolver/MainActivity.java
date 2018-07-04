@@ -85,9 +85,11 @@ public class MainActivity extends AppCompatActivity {
     private void onBuildNewBoardClick() {
         if (SolveTaskManager.isSolvingBoard()) {
             Toast.makeText(this, "Cannot create a new board while solving the current board", Toast.LENGTH_SHORT).show();
+        } else if (CellModelManager.isNewBoardTaskRunning()) {
+            Toast.makeText(this, "New board task is currently running", Toast.LENGTH_SHORT).show();
         } else {
+            Toast.makeText(this, "Creating new board...", Toast.LENGTH_SHORT).show();
             resetSolveButtonIcon();
-
             int filledCells = generateFilledCellsCount();
             CellModelManager.buildNewBoard(filledCells);
         }
@@ -285,7 +287,6 @@ public class MainActivity extends AppCompatActivity {
             SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
             String message = new StringBuilder()
                     .append("Run time: "+df.format(new Date(stats.getElapsedTime())))
-                    .append(", this puzzle may be unsolvable...")
                     .toString();
             Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
         }
