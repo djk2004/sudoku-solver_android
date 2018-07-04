@@ -42,24 +42,9 @@ public class MainActivity extends AppCompatActivity {
             // This should only happen when the activity is first created on application start
             cellIDsToBoxIDs = buildCellIDsMap();
             int filledCells = generateFilledCellsCount();
-            reg = CellModelManager.buildNewBoard(filledCells, new CellModel.ChangeListener() {
-                @Override
-                public void onChange(final Cell cell, int oldValue) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Integer id = Integer.valueOf(cell.getID());
-                            TextView text = (TextView)findViewById(cellIDsToBoxIDs.get(id));
-                            int value = cell.getValue();
-                            String textValue = value == 0 ? "" : ""+value;
-                            text.setTextColor(cell.isLocked() ?
-                                    ContextCompat.getColor(text.getContext(), android.R.color.black) :
-                                    ContextCompat.getColor(text.getContext(), R.color.colorPrimaryDark));
-                            text.setText(textValue);
-                        }
-                    });
-                }
-            });
+            reg = CellModelManager.initializeModel(buildUIChangeListener());
+            CellModelManager.buildNewBoard(filledCells, buildUIChangeListener());
+            Toast.makeText(this, "Creating new board...", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -88,10 +73,10 @@ public class MainActivity extends AppCompatActivity {
         } else if (CellModelManager.isNewBoardTaskRunning()) {
             Toast.makeText(this, "New board task is currently running", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Creating new board...", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Creating new board...", Toast.LENGTH_LONG).show();
             resetSolveButtonIcon();
             int filledCells = generateFilledCellsCount();
-            CellModelManager.buildNewBoard(filledCells);
+            CellModelManager.buildNewBoard(filledCells, buildUIChangeListener());
         }
     }
 
@@ -300,5 +285,26 @@ public class MainActivity extends AppCompatActivity {
                     .toString();
             Toast.makeText(activity, message, Toast.LENGTH_SHORT).show();
         }
+    }
+
+    public CellModel.ChangeListener buildUIChangeListener() {
+        return new CellModel.ChangeListener() {
+            @Override
+            public void onChange(final Cell cell, int oldValue) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Integer id = Integer.valueOf(cell.getID());
+                        TextView text = (TextView)findViewById(cellIDsToBoxIDs.get(id));
+                        int value = cell.getValue();
+                        String textValue = value == 0 ? "" : ""+value;
+                        text.setTextColor(cell.isLocked() ?
+                                ContextCompat.getColor(text.getContext(), android.R.color.black) :
+                                ContextCompat.getColor(text.getContext(), R.color.colorPrimaryDark));
+                        text.setText(textValue);
+                    }
+                });
+            }
+        };
     }
 }

@@ -8,13 +8,13 @@ public class CellModelManager {
      * @param filledCells The number of initially filled cells
      * @return
      */
-    public static CellModel buildNewBoard(int filledCells) {
+    public static CellModel buildNewBoard(int filledCells, CellModel.ChangeListener listener) {
         if (cellModel == null) {
             cellModel = new CellModel();
         } else {
             cellModel.resetAllCells();
         }
-        BoardGenerator.buildSolvedBoard(filledCells, cellModel);
+        BoardGenerator.buildSolvedBoard(filledCells, cellModel, listener);
         SolveTaskManager.clearAllStats();
         return cellModel;
     }
@@ -25,14 +25,11 @@ public class CellModelManager {
 
     /**
      * Instantiates the global cell model
-     * @param filledCells The number of initially filled cells
      * @return
      */
-    public static CellModel.ChangeListenerRegistration buildNewBoard(int filledCells, CellModel.ChangeListener listener) {
+    public static CellModel.ChangeListenerRegistration initializeModel(CellModel.ChangeListener listener) {
         cellModel = new CellModel();
         CellModel.ChangeListenerRegistration reg = cellModel.addListener(listener);
-        BoardGenerator.buildSolvedBoard(filledCells, cellModel);
-        SolveTaskManager.clearAllStats();
         return reg;
     }
 

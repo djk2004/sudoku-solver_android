@@ -14,11 +14,11 @@ public class BoardGenerator {
     private static GeneratorTask task;
     private static AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public static void buildSolvedBoard(int filledCells, CellModel unsolved) {
+    public static void buildSolvedBoard(int filledCells, CellModel unsolved, CellModel.ChangeListener listener) {
         if (isRunning.get()) {
             throw new RuntimeException("Board generation task is currently running");
         }
-        task = new GeneratorTask(filledCells, isRunning);
+        task = new GeneratorTask(filledCells, isRunning, listener);
         task.execute(unsolved);
     }
 
@@ -31,18 +31,22 @@ public class BoardGenerator {
         private ExecutorService jobExecutor = Executors.newSingleThreadExecutor();
         private final int filledCells;
         private final AtomicBoolean isRunning;
+        private final CellModel.ChangeListener listener;
 
-        public GeneratorTask(int filledCells, AtomicBoolean isRunning) {
+        public GeneratorTask(int filledCells, AtomicBoolean isRunning, CellModel.ChangeListener listener) {
             this.filledCells = filledCells;
             this.isRunning = isRunning;
+            this.listener = listener;
         }
 
         @Override
         protected CellModel doInBackground(CellModel... models) {
             isRunning.set(true);
             CellModel unsolved = models[0];
+            CellModel.ChangeListenerRegistration reg = null;
             try {
                 CellModel solved = new CellModel();
+                reg = solved.addListener(listener);
                 while (!solved.isSolved()) {
                     getSolvedBoard(solved);
                 }
@@ -51,6 +55,10 @@ public class BoardGenerator {
                 // do nothing, ignoring unsolvable boards
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                if (reg != null) {
+                    reg.unregister();
+                }
             }
             return unsolved;
         }
@@ -112,6 +120,7 @@ public class BoardGenerator {
         protected void onPostExecute(CellModel model) {
             try {
                 model.lockFilledCells();
+                model.resetCells();
                 jobExecutor.shutdownNow();
                 cancelExecutor.shutdownNow();
             }
