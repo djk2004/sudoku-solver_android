@@ -96,6 +96,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onSolveClick(MenuItem item) {
+        if (CellModelManager.isNewBoardTaskRunning()) {
+            // do nothing
+            return;
+        }
+
         try {
             if (CellModelManager.getInstance().isSolved()) {
                 String message = buildSolvedMessage(SolveTaskManager.getSolveStats());
@@ -125,6 +130,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onResetClick() {
+        if (CellModelManager.isNewBoardTaskRunning()) {
+            // do nothing
+            return;
+        }
+
         if (SolveTaskManager.isSolvingBoard()) {
             Toast.makeText(this, "Cannot reset board while solving", Toast.LENGTH_SHORT).show();
         } else {
