@@ -46,7 +46,6 @@ public class MainActivity extends AppCompatActivity {
             int filledCells = generateFilledCellsCount();
             reg = CellModelManager.initializeModel(buildUIChangeListener());
             CellModelManager.buildNewBoard(filledCells, buildUIChangeListener());
-            Toast.makeText(this, "Creating new board...", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -75,7 +74,6 @@ public class MainActivity extends AppCompatActivity {
         } else if (BackgroundTaskManager.getInstance().isCreatingNewBoard()) {
             Toast.makeText(this, "New board task is currently running", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Creating new board...", Toast.LENGTH_LONG).show();
             resetSolveButtonIcon();
             int filledCells = generateFilledCellsCount();
             CellModelManager.buildNewBoard(filledCells, buildUIChangeListener());
