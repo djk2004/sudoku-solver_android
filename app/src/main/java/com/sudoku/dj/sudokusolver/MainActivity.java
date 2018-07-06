@@ -14,6 +14,8 @@ import com.sudoku.dj.sudokusolver.solver.Cell;
 import com.sudoku.dj.sudokusolver.solver.CellModel;
 import com.sudoku.dj.sudokusolver.solver.CellModelManager;
 import com.sudoku.dj.sudokusolver.solver.SolveTaskManager;
+import com.sudoku.dj.sudokusolver.tasks.BackgroundTaskManager;
+import com.sudoku.dj.sudokusolver.tasks.SolveTask;
 
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -68,9 +70,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onBuildNewBoardClick() {
-        if (SolveTaskManager.isSolvingBoard()) {
+        if (BackgroundTaskManager.getInstance().isSolvingBoard()) {
             Toast.makeText(this, "Cannot create a new board while solving the current board", Toast.LENGTH_SHORT).show();
-        } else if (CellModelManager.isNewBoardTaskRunning()) {
+        } else if (BackgroundTaskManager.getInstance().isCreatingNewBoard()) {
             Toast.makeText(this, "New board task is currently running", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Creating new board...", Toast.LENGTH_LONG).show();
@@ -81,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onSolveClick(MenuItem item) {
-        if (CellModelManager.isNewBoardTaskRunning()) {
+        if (BackgroundTaskManager.getInstance().isCreatingNewBoard()) {
             // do nothing
             return;
         }
@@ -93,20 +95,21 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            if (SolveTaskManager.isSolvingBoard()) {
+            if (BackgroundTaskManager.getInstance().isSolvingBoard()) {
                 item.setIcon(android.R.drawable.ic_media_play);
-                SolveTaskManager.cancelSolve();
+                BackgroundTaskManager.getInstance().cancelTask();
                 return;
             }
 
             item.setIcon(android.R.drawable.ic_media_pause);
-            SolveTaskManager.solve(new SolveListenerImpl(this));
+            SolveTask task = new SolveTask(new SolveListenerImpl(this));
+            BackgroundTaskManager.getInstance().runTask(task, CellModelManager.getInstance());
         } catch (Exception e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
-    private String buildSolvedMessage(SolveTaskManager.SolveStats stats) {
+    private String buildSolvedMessage(SolveTask.SolveStats stats) {
         SimpleDateFormat df = new SimpleDateFormat("mm:ss.SSS");
         return new StringBuilder()
             .append("Solved in "+df.format(new Date(stats.getElapsedTime())))
@@ -115,12 +118,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onResetClick() {
-        if (CellModelManager.isNewBoardTaskRunning()) {
+        if (BackgroundTaskManager.getInstance().isCreatingNewBoard()) {
             // do nothing
             return;
         }
 
-        if (SolveTaskManager.isSolvingBoard()) {
+        if (BackgroundTaskManager.getInstance().isSolvingBoard()) {
             Toast.makeText(this, "Cannot reset board while solving", Toast.LENGTH_SHORT).show();
         } else {
             CellModelManager.getInstance().resetCells();
@@ -252,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
         return Collections.unmodifiableMap(map);
     }
 
-    private static class SolveListenerImpl implements SolveTaskManager.SolverListener {
+    private static class SolveListenerImpl implements SolveTask.SolverListener {
         private final MainActivity activity;
 
         public SolveListenerImpl(MainActivity activity) {
@@ -260,12 +263,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onPaused(SolveTaskManager.SolveStats stats) {
+        public void onPaused(SolveTask.SolveStats stats) {
             // no-op
         }
 
         @Override
-        public void onSolved(SolveTaskManager.SolveStats stats) {
+        public void onSolved(SolveTask.SolveStats stats) {
             if (activity.isDestroyed() || activity.isFinishing()) {
                 return;
             }
@@ -275,7 +278,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onLongRunningTask(SolveTaskManager.SolveStats stats) {
+        public void onLongRunningTask(SolveTask.SolveStats stats) {
             if (activity.isDestroyed() || activity.isFinishing()) {
                 return;
             }

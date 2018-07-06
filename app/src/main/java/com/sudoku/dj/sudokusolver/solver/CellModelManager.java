@@ -1,5 +1,8 @@
 package com.sudoku.dj.sudokusolver.solver;
 
+import com.sudoku.dj.sudokusolver.tasks.BackgroundTaskManager;
+import com.sudoku.dj.sudokusolver.tasks.BoardGeneratorTask;
+
 public class CellModelManager {
     private static CellModel cellModel;
 
@@ -14,13 +17,10 @@ public class CellModelManager {
         } else {
             cellModel.resetAllCells();
         }
-        BoardGenerator.buildSolvedBoard(filledCells, cellModel, listener);
+        BoardGeneratorTask task = new BoardGeneratorTask(filledCells, listener);
+        BackgroundTaskManager.getInstance().runTask(task, cellModel);
         SolveTaskManager.clearAllStats();
         return cellModel;
-    }
-
-    public static boolean isNewBoardTaskRunning() {
-        return BoardGenerator.isNewBoardTaskRunning();
     }
 
     /**
