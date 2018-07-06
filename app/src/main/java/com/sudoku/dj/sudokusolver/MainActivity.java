@@ -13,7 +13,7 @@ import android.widget.Toast;
 import com.sudoku.dj.sudokusolver.solver.Cell;
 import com.sudoku.dj.sudokusolver.solver.CellModel;
 import com.sudoku.dj.sudokusolver.solver.CellModelManager;
-import com.sudoku.dj.sudokusolver.solver.SolveTaskManager;
+import com.sudoku.dj.sudokusolver.solver.CurrentSolverStatsManager;
 import com.sudoku.dj.sudokusolver.tasks.BackgroundTaskManager;
 import com.sudoku.dj.sudokusolver.tasks.SolveTask;
 
@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             if (CellModelManager.getInstance().isSolved()) {
-                String message = buildSolvedMessage(SolveTaskManager.getSolveStats());
+                String message = buildSolvedMessage(CurrentSolverStatsManager.getInstance().getSolveStats());
                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Cannot reset board while solving", Toast.LENGTH_SHORT).show();
         } else {
             CellModelManager.getInstance().resetCells();
-            SolveTaskManager.clearAllStats();
+            CurrentSolverStatsManager.getInstance().clearAllStats();
         }
     }
 

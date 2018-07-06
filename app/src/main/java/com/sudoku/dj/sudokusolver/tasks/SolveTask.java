@@ -1,7 +1,7 @@
 package com.sudoku.dj.sudokusolver.tasks;
 
 import com.sudoku.dj.sudokusolver.solver.CellModel;
-import com.sudoku.dj.sudokusolver.solver.SolveTaskManager;
+import com.sudoku.dj.sudokusolver.solver.CurrentSolverStatsManager;
 import com.sudoku.dj.sudokusolver.solver.Solver;
 
 public class SolveTask implements BackgroundTaskManager.BackgroundTaskWork<SolveTask.SolveStats> {
@@ -39,8 +39,8 @@ public class SolveTask implements BackgroundTaskManager.BackgroundTaskWork<Solve
                 return elapsed;
             }
         };
-        SolveTaskManager.addStats(current);
-        SolveStats all = SolveTaskManager.getSolveStats();
+        CurrentSolverStatsManager.getInstance().addStats(current);
+        SolveStats all = CurrentSolverStatsManager.getInstance().getSolveStats();
         return all;
     }
 
@@ -88,8 +88,8 @@ public class SolveTask implements BackgroundTaskManager.BackgroundTaskWork<Solve
         if (steps == 0) {
             return;
         }
-        SolveTaskManager.addStats(stats);
-        SolveStats all = SolveTaskManager.getSolveStats();
+        CurrentSolverStatsManager.getInstance().addStats(stats);
+        SolveStats all = CurrentSolverStatsManager.getInstance().getSolveStats();
         if (BackgroundTaskManager.getInstance().isCurrentTaskCancelled().get()) {
             solverListener.onPaused(all);
         } else {

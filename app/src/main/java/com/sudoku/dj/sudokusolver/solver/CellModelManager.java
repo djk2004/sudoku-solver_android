@@ -19,7 +19,7 @@ public class CellModelManager {
         }
         BoardGeneratorTask task = new BoardGeneratorTask(filledCells, listener);
         BackgroundTaskManager.getInstance().runTask(task, cellModel);
-        SolveTaskManager.clearAllStats();
+        CurrentSolverStatsManager.getInstance().clearAllStats();
         return cellModel;
     }
 

@@ -1,39 +1,36 @@
 package com.sudoku.dj.sudokusolver.solver;
 
 import com.sudoku.dj.sudokusolver.tasks.SolveTask;
+
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
-@Deprecated
-public class SolveTaskManager {
-    private static AllStats allStats = new AllStats();
+public class CurrentSolverStatsManager {
+    private static CurrentSolverStatsManager instance;
 
-    public static void clearAllStats() {
+    private final List<SolveTask.SolveStats> allStats;
+
+    private CurrentSolverStatsManager() {
+        this.allStats = new ArrayList<>();
+    }
+
+    public static CurrentSolverStatsManager getInstance() {
+        if (instance == null) {
+            instance = new CurrentSolverStatsManager();
+        }
+        return instance;
+    }
+
+    public synchronized void clearAllStats() {
         allStats.clear();
     }
 
-    public static SolveTask.SolveStats getSolveStats() {
-        return allStats.get();
-    }
-
-    public static void addStats(SolveTask.SolveStats stats) {
+    public synchronized void addStats(SolveTask.SolveStats stats) {
         allStats.add(stats);
     }
 
-    private static class AllStats {
-        private List<SolveTask.SolveStats> solveStatsList = new CopyOnWriteArrayList<>();
-
-        public void clear() {
-            solveStatsList.clear();
-        }
-
-        public void add(SolveTask.SolveStats stats) {
-            solveStatsList.add(stats);
-        }
-
-        public SolveTask.SolveStats get() {
-            return new CumulativeSolveStats(solveStatsList);
-        }
+    public synchronized SolveTask.SolveStats getSolveStats() {
+        return new CumulativeSolveStats(allStats);
     }
 
     private static class CumulativeSolveStats implements SolveTask.SolveStats {
