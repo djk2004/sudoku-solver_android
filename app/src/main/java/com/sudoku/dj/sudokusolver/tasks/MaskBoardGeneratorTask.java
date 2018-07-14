@@ -1,32 +1,58 @@
 package com.sudoku.dj.sudokusolver.tasks;
 
+import android.content.res.AssetManager;
+
 import com.sudoku.dj.sudokusolver.solver.Cell;
 import com.sudoku.dj.sudokusolver.solver.CellModel;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.zip.ZipInputStream;
 
 public class MaskBoardGeneratorTask implements BackgroundTaskManager.BackgroundTaskWork<CellModel>  {
 
+    private static final int MAX_FILES = 10;
+    private static final int MAX_MASKS = 100000;
+
     private final int filledCells;
     private Random random;
+    private AssetManager assets;
 
-    public MaskBoardGeneratorTask(int filledCells) {
+    public MaskBoardGeneratorTask(int filledCells, AssetManager assets) {
         this.filledCells = filledCells;
+        this.assets = assets;
         random = new Random(System.currentTimeMillis());
     }
 
     @Override
     public CellModel doWork(CellModel model) {
         model.resetAllCells();
-        String mask = masks.get(random.nextInt(masks.size()));
+        String mask = getMask();
         Map<Character, Integer> map = buildMap();
         buildUnsolvedBoard(model, mask, map);
         return model;
+    }
+
+    private String getMask() {
+        int fileID = random.nextInt(MAX_FILES);
+        int lines = random.nextInt(MAX_MASKS);
+        try (ZipInputStream zip = new ZipInputStream(assets.open("masks."+fileID+".zip"));
+             BufferedReader reader = new BufferedReader(new InputStreamReader(zip))) {
+            zip.getNextEntry(); // allows the file to be read
+            String mask = null;
+            for (int i=0; i<=lines; i++) {
+                mask = reader.readLine();
+            }
+            return mask;
+        } catch (Exception e) {
+            throw new RuntimeException("Unknown error reading file", e);
+        }
     }
 
     private void buildUnsolvedBoard(CellModel model, String mask, Map<Character, Integer> map) {
@@ -71,32 +97,5 @@ public class MaskBoardGeneratorTask implements BackgroundTaskManager.BackgroundT
     @Override
     public void onFinish(CellModel model) {
         model.lockFilledCells();
-    }
-
-    // HACK: these belong somewhere else, either in a file or database
-    private static final List<String> masks;
-    static {
-        List<String> m = new ArrayList<>();
-        m.add("ABCDEFGHIIDGABHCEFHFEICGDBAFIAGHEBCDGEDBICAFHBCHFADIGEEABCFIHDGDHIEGBFACCGFHDAEIB");
-        m.add("ABCDEFGHIFDEIGHBCAGIHBACFEDICDHFBAGEEFACDGIBHHGBAIECDFBEGFHIDACDHIGCAEFBCAFEBDHIG");
-        m.add("ABCDEFGHIFDEHGIBACHGIBCADEFBEAIFDCGHGIFCHBEDADCHEAGFIBIABGDCHFEEFDABHICGCHGFIEABD");
-        m.add("ABCDEFGHIFGDIHAECBHIEGCBDFAGCHBIEFADEFAHGDIBCBDIAFCHEGCHBEDIAGFDAGFBHCIEIEFCAGBDH");
-        m.add("ABCDEFGHIGIECHAFBDFDHGBICEACHGEDBIAFDEAFIHBCGBFIACGHDEICFBAEDGHEGBHFDAICHADIGCEFB");
-        m.add("ABCDEFGHIIGDHBCFAEEFHAIGCBDHABGDEICFCDIFABEGHGEFCHIADBDCAIFHBEGFHEBGADICBIGECDHFA");
-        m.add("ABCDEFGHIHFDGBICEAIEGCAHDFBGCFEIAHBDDHEBFGAICBAIHCDEGFEGBIDCFAHCIAFHEBDGFDHAGBICE");
-        m.add("ABCDEFGHIDGFHIBAECHEIACGDBFCIBFGDEAHGAHEBCFIDFDEIAHCGBIHGCFEBDAEFABDIHCGBCDGHAIFE");
-        m.add("ABCDEFGHIHDGIACBFEIEFHBGACDDHBEFACIGCIEBGHFDAFGACDIEBHBCIAHEDGFGADFIBHECEFHGCDIAB");
-        m.add("ABCDEFGHIEHGCAIBDFFIDGHBCAEHCIFGADEBBFAEDHICGGDEIBCHFADAFHIGEBCCGHBFEAIDIEBACDFGH");
-        m.add("ABCDEFGHIEFDIHGACBIGHABCFEDCHAFGIBDEDIGBCEHAFBEFHDACIGFABEIHDGCGDICABEFHHCEGFDIBA");
-        m.add("ABCDEFGHIIFHAGCDEBEGDIHBACFGABEFICDHCIFHADBGEDHEBCGFIAFDAGIHEBCBEICDAHFGHCGFBEIAD");
-        m.add("ABCDEFGHIDEGHICAFBHIFBGACDEFCDEAGIBHEHICFBDGABGAIHDECFCAHFDEBIGIDEGBHFACGFBACIHED");
-        m.add("ABCDEFGHIFDGIBHAECIEHCAGFDBBHAFGCDIEGIEBDACFHDCFHIEBAGCADGHIEBFHGBEFDICAEFIACBHGD");
-        m.add("ABCDEFGHIDHEGAIFBCFIGBCHEDAHGIEDBACFCFAHIGBEDBEDAFCHIGGDHCBAIFEICBFGEDAHEAFIHDCGB");
-        m.add("ABCDEFGHIHGFIACBDEIEDBHGFCAEAHCGDIBFBCGFIHAEDDFIABECGHCDEGFIHABGIAHDBEFCFHBECADIG");
-        m.add("ABCDEFGHIEGHCIBFADDFIAGHCBEHCDEFGBIABEFIHADGCIAGBDCHEFFDAHBIECGCHEGADIFBGIBFCEADH");
-        m.add("ABCDEFGHIDFIHCGBEAHEGBIACFDICDEHBFAGEABFGIHDCFGHCADIBEGIFADHECBCHAGBEDIFBDEIFCAGH");
-        m.add("ABCDEFGHIEIGHCADFBHDFIBGCEAIABGFDHCECEDAHBFIGGFHCIEABDDCIEAHBGFFHABGIEDCBGEFDCIAH");
-        m.add("ABCDEFGHIHEFIBGADCGDICAHBFEFHABCEIGDCGDAFIEBHBIEHGDCAFECGFDBHIAIFBEHADCGDAHGICFEB");
-        masks = Collections.unmodifiableList(m);
     }
 }

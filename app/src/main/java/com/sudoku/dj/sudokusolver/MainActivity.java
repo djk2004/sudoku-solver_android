@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
             cellIDsToBoxIDs = buildCellIDsMap();
             int filledCells = generateFilledCellsCount();
             reg = CellModelManager.initializeModel(buildUIChangeListener());
-            CellModelManager.buildNewBoard(filledCells, buildUIChangeListener());
+            CellModelManager.buildNewBoard(filledCells, buildUIChangeListener(), getAssets());
         }
     }
 
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             resetSolveButtonIcon();
             int filledCells = generateFilledCellsCount();
-            CellModelManager.buildNewBoard(filledCells, buildUIChangeListener());
+            CellModelManager.buildNewBoard(filledCells, buildUIChangeListener(), getAssets());
         }
     }
 

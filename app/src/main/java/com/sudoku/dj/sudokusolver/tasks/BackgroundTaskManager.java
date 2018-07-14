@@ -57,7 +57,8 @@ public class BackgroundTaskManager {
         if (!isTaskRunning()) {
             return false;
         }
-        return this.task.getWork() instanceof BoardGeneratorTask;
+        BackgroundTaskWork<?> work = this.task.getWork();
+        return work instanceof BoardGeneratorTask || work instanceof MaskBoardGeneratorTask;
     }
 
     // HACK: probably shouldn't expose the AtomicBoolean here

@@ -1,5 +1,7 @@
 package com.sudoku.dj.sudokusolver.solver;
 
+import android.content.res.AssetManager;
+
 import com.sudoku.dj.sudokusolver.tasks.BackgroundTaskManager;
 import com.sudoku.dj.sudokusolver.tasks.BoardGeneratorTask;
 import com.sudoku.dj.sudokusolver.tasks.MaskBoardGeneratorTask;
@@ -12,14 +14,13 @@ public class CellModelManager {
      * @param filledCells The number of initially filled cells
      * @return
      */
-    public static CellModel buildNewBoard(int filledCells, CellModel.ChangeListener listener) {
+    public static CellModel buildNewBoard(int filledCells, CellModel.ChangeListener listener, AssetManager assets) {
         if (cellModel == null) {
             cellModel = new CellModel();
         } else {
             cellModel.resetAllCells();
         }
-//        BoardGeneratorTask task = new BoardGeneratorTask(filledCells, listener);
-        MaskBoardGeneratorTask task = new MaskBoardGeneratorTask(filledCells);
+        MaskBoardGeneratorTask task = new MaskBoardGeneratorTask(filledCells, assets);
         BackgroundTaskManager.getInstance().runTask(task, cellModel);
         CurrentSolverStatsManager.getInstance().clearAllStats();
         return cellModel;
