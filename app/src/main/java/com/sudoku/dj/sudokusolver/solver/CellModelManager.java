@@ -6,20 +6,23 @@ import com.sudoku.dj.sudokusolver.tasks.BackgroundTaskManager;
 import com.sudoku.dj.sudokusolver.tasks.BoardGeneratorTask;
 import com.sudoku.dj.sudokusolver.tasks.MaskBoardGeneratorTask;
 
+import java.util.Random;
+
 public class CellModelManager {
     private static CellModel cellModel;
 
     /**
      * Instantiates the global cell model
-     * @param filledCells The number of initially filled cells
      * @return
      */
-    public static CellModel buildNewBoard(int filledCells, CellModel.ChangeListener listener, AssetManager assets) {
+    public static CellModel buildNewBoard(AssetManager assets) {
         if (cellModel == null) {
             cellModel = new CellModel();
         } else {
             cellModel.resetAllCells();
         }
+        Random r = new Random(System.currentTimeMillis());
+        int filledCells = r.nextInt(15) + 17;
         MaskBoardGeneratorTask task = new MaskBoardGeneratorTask(filledCells, assets);
         BackgroundTaskManager.getInstance().runTask(task, cellModel);
         CurrentSolverStatsManager.getInstance().clearAllStats();
