@@ -1,7 +1,9 @@
 package com.sudoku.dj.sudokusolver.tasks;
 
+import com.sudoku.dj.sudokusolver.MainActivity;
 import com.sudoku.dj.sudokusolver.solver.Cell;
 import com.sudoku.dj.sudokusolver.solver.CellModel;
+import com.sudoku.dj.sudokusolver.solver.CurrentSolverStatsManager;
 import com.sudoku.dj.sudokusolver.solver.Solver;
 
 import java.util.Random;
@@ -17,10 +19,12 @@ public class BoardGeneratorTask implements BackgroundTaskManager.BackgroundTaskW
     private ExecutorService jobExecutor = Executors.newSingleThreadExecutor();
     private final int filledCells;
     private final CellModel.ChangeListener listener;
+    private MainActivity activity;
 
-    public BoardGeneratorTask(int filledCells, CellModel.ChangeListener listener) {
+    public BoardGeneratorTask(int filledCells, CellModel.ChangeListener listener, MainActivity activity) {
         this.filledCells = filledCells;
         this.listener = listener;
+        this.activity = activity;
     }
 
     @Override
@@ -104,5 +108,8 @@ public class BoardGeneratorTask implements BackgroundTaskManager.BackgroundTaskW
         model.resetCells();
         jobExecutor.shutdownNow();
         cancelExecutor.shutdownNow();
+        CurrentSolverStatsManager.getInstance().clearAllStats();
+        if (!activity.isFinishing() && !activity.isDestroyed())
+            activity.returnToBoardFragment();
     }
 }

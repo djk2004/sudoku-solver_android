@@ -37,6 +37,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void showProgressFragment() {
+        ProgressFragment fragment = new ProgressFragment();
+        FragmentTransaction ft = getFragmentManager().beginTransaction();
+        ft.replace(BoardFragment.CONTEXT_ID, fragment);
+        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN);
+        ft.addToBackStack(null);
+        ft.commit();
+    }
+
+    public void returnToBoardFragment() {
+        getFragmentManager().popBackStack();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         this.menu = menu;
@@ -55,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "New board task is currently running", Toast.LENGTH_SHORT).show();
         } else {
             resetSolveButtonIcon();
-            CellModelManager.buildNewBoard(getAssets());
+            showProgressFragment();
+            CellModelManager.buildNewBoard(this);
         }
     }
 

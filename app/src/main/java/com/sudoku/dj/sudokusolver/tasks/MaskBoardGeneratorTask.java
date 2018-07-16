@@ -1,12 +1,12 @@
 package com.sudoku.dj.sudokusolver.tasks;
 
-import android.content.res.AssetManager;
-
+import com.sudoku.dj.sudokusolver.MainActivity;
 import com.sudoku.dj.sudokusolver.solver.Cell;
 import com.sudoku.dj.sudokusolver.solver.CellModel;
+import com.sudoku.dj.sudokusolver.solver.CellModelManager;
+import com.sudoku.dj.sudokusolver.solver.CurrentSolverStatsManager;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,11 +22,11 @@ public class MaskBoardGeneratorTask implements BackgroundTaskManager.BackgroundT
 
     private final int filledCells;
     private Random random;
-    private AssetManager assets;
+    private MainActivity activity;
 
-    public MaskBoardGeneratorTask(int filledCells, AssetManager assets) {
+    public MaskBoardGeneratorTask(int filledCells, MainActivity activity) {
         this.filledCells = filledCells;
-        this.assets = assets;
+        this.activity = activity;
         random = new Random(System.currentTimeMillis());
     }
 
@@ -42,7 +42,7 @@ public class MaskBoardGeneratorTask implements BackgroundTaskManager.BackgroundT
     private String getMask() {
         int fileID = random.nextInt(MAX_FILES);
         int lines = random.nextInt(MAX_MASKS);
-        try (ZipInputStream zip = new ZipInputStream(assets.open("masks."+fileID+".zip"));
+        try (ZipInputStream zip = new ZipInputStream(activity.getAssets().open("masks."+fileID+".zip"));
              BufferedReader reader = new BufferedReader(new InputStreamReader(zip))) {
             zip.getNextEntry(); // allows the file to be read
             String mask = null;
@@ -97,5 +97,9 @@ public class MaskBoardGeneratorTask implements BackgroundTaskManager.BackgroundT
     @Override
     public void onFinish(CellModel model) {
         model.lockFilledCells();
+        CurrentSolverStatsManager.getInstance().clearAllStats();
+        if (!activity.isFinishing() && !activity.isDestroyed()) {
+            activity.returnToBoardFragment();
+        }
     }
 }

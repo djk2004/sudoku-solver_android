@@ -1,7 +1,6 @@
 package com.sudoku.dj.sudokusolver;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -51,7 +50,27 @@ public class BoardFragment extends Fragment {
             reg = CellModelManager.initializeModel(buildUIChangeListener());
 
             // must run after onCreateView() returns
-            CellModelManager.buildNewBoard(getActivity().getAssets());
+            MainActivity activity = (MainActivity)getActivity();
+            activity.showProgressFragment();
+            CellModelManager.buildNewBoard(activity);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        View view = getView();
+        for (Cell cell: CellModelManager.getInstance().getFilledCells()) {
+            Integer id = Integer.valueOf(cell.getID());
+            Integer viewID = cellIDsToBoxIDs.get(id);
+            TextView text = (TextView)view.findViewById(viewID);
+            int value = cell.getValue();
+            String textValue = value == 0 ? "" : ""+value;
+            text.setTextColor(cell.isLocked() ?
+                    ContextCompat.getColor(text.getContext(), android.R.color.black) :
+                    ContextCompat.getColor(text.getContext(), R.color.colorPrimaryDark));
+            text.setText(textValue);
         }
     }
 
@@ -69,16 +88,18 @@ public class BoardFragment extends Fragment {
     }
 
     public CellModel.ChangeListener buildUIChangeListener() {
-        final BoardFragment fragment = this;
         return new CellModel.ChangeListener() {
             @Override
             public void onChange(final Cell cell, int oldValue) {
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+                        View view = getView();
+                        if (view == null)
+                            return;
                         Integer id = Integer.valueOf(cell.getID());
                         Integer viewID = cellIDsToBoxIDs.get(id);
-                        TextView text = (TextView)fragment.getView().findViewById(viewID);
+                        TextView text = (TextView)view.findViewById(viewID);
                         int value = cell.getValue();
                         String textValue = value == 0 ? "" : ""+value;
                         text.setTextColor(cell.isLocked() ?

@@ -2,6 +2,7 @@ package com.sudoku.dj.sudokusolver.solver;
 
 import android.content.res.AssetManager;
 
+import com.sudoku.dj.sudokusolver.MainActivity;
 import com.sudoku.dj.sudokusolver.tasks.BackgroundTaskManager;
 import com.sudoku.dj.sudokusolver.tasks.BoardGeneratorTask;
 import com.sudoku.dj.sudokusolver.tasks.MaskBoardGeneratorTask;
@@ -15,7 +16,7 @@ public class CellModelManager {
      * Instantiates the global cell model
      * @return
      */
-    public static CellModel buildNewBoard(AssetManager assets) {
+    public static CellModel buildNewBoard(MainActivity activity) {
         if (cellModel == null) {
             cellModel = new CellModel();
         } else {
@@ -23,9 +24,8 @@ public class CellModelManager {
         }
         Random r = new Random(System.currentTimeMillis());
         int filledCells = r.nextInt(15) + 17;
-        MaskBoardGeneratorTask task = new MaskBoardGeneratorTask(filledCells, assets);
+        MaskBoardGeneratorTask task = new MaskBoardGeneratorTask(filledCells, activity);
         BackgroundTaskManager.getInstance().runTask(task, cellModel);
-        CurrentSolverStatsManager.getInstance().clearAllStats();
         return cellModel;
     }
 
