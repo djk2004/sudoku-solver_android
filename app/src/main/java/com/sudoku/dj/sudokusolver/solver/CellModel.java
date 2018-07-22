@@ -1,10 +1,14 @@
 package com.sudoku.dj.sudokusolver.solver;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -364,14 +368,28 @@ public class CellModel {
             if (isImmutable.get()) {
                 return Collections.emptySet();
             }
-            Set<Integer> available = new HashSet<>();
-            Set<Integer> h = getHorizontalGroup().getAvailableValues();
-            Set<Integer> v = getVerticalGroup().getAvailableValues();
-            Set<Integer> c = getCubeGroup().getAvailableValues();
-            for (Integer value : LEGAL_VALUES) {
-                if (h.contains(value) && v.contains(value) && c.contains(value)) {
-                    available.add(value);
+
+            LinkedList<Set<Integer>> sorted = new LinkedList<>();
+            sorted.add(getHorizontalGroup().getAvailableValues());
+            sorted.add(getVerticalGroup().getAvailableValues());
+            sorted.add(getCubeGroup().getAvailableValues());
+            Collections.sort(sorted, new Comparator<Set<Integer>>() {
+                @Override
+                public int compare(Set<Integer> a, Set<Integer> b) {
+                    Integer aSize = Integer.valueOf(a.size());
+                    Integer bSize = Integer.valueOf(b.size());
+                    return aSize.compareTo(bSize);
                 }
+            });
+
+            // use the smallest of the three sets to find intersections with the other two
+            Set<Integer> smallest = sorted.removeFirst();
+            Set<Integer> s1 = sorted.removeFirst();
+            Set<Integer> s2 = sorted.removeFirst();
+            Set<Integer> available = new HashSet<>();
+            for (Integer value : smallest) {
+                if (s1.contains(value) && s2.contains(value))
+                    available.add(value);
             }
             return Collections.unmodifiableSet(available);
         }
