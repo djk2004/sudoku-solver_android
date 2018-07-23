@@ -203,6 +203,10 @@ public class BoardFragment extends Fragment {
     private class UpdateTask implements Runnable {
         @Override
         public void run() {
+            synchronized (changes) {
+                if (changes.isEmpty())
+                    return;
+            }
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
