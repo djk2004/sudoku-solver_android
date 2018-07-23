@@ -18,21 +18,17 @@ public class BoardGeneratorTask implements BackgroundTaskManager.BackgroundTaskW
     private ScheduledExecutorService cancelExecutor = Executors.newSingleThreadScheduledExecutor();
     private ExecutorService jobExecutor = Executors.newSingleThreadExecutor();
     private final int filledCells;
-    private final CellModel.ChangeListener listener;
     private MainActivity activity;
 
-    public BoardGeneratorTask(int filledCells, CellModel.ChangeListener listener, MainActivity activity) {
+    public BoardGeneratorTask(int filledCells, MainActivity activity) {
         this.filledCells = filledCells;
-        this.listener = listener;
         this.activity = activity;
     }
 
     @Override
     public CellModel doWork(CellModel unsolved) {
-        CellModel.ChangeListenerRegistration reg = null;
         try {
             CellModel solved = new CellModel();
-            reg = solved.addListener(listener);
             while (!solved.isSolved()) {
                 getSolvedBoard(solved);
             }
@@ -41,10 +37,6 @@ public class BoardGeneratorTask implements BackgroundTaskManager.BackgroundTaskW
             // do nothing, ignoring unsolvable boards
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (reg != null) {
-                reg.unregister();
-            }
         }
         return unsolved;
     }

@@ -1,6 +1,5 @@
 package com.sudoku.dj.sudokusolver.solver;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -139,6 +137,10 @@ public class CellModel {
     public void setValue(Cell cell, Integer value) {
         int oldValue = cell.getValue();
         ((CellImpl)cell).setValue(value);
+        ((CellImpl)cell).resetAvailableCache();
+        ((GroupImpl)cell.getHorizontalGroup()).resetAvailableCache();
+        ((GroupImpl)cell.getVerticalGroup()).resetAvailableCache();
+        ((GroupImpl)cell.getCubeGroup()).resetAvailableCache();
         for (ChangeListener listener: listeners) {
             listener.onChange(cell, oldValue);
         }
@@ -305,6 +307,7 @@ public class CellModel {
         private final int id, horizontalID, verticalID, cubeID;
         private AtomicBoolean isImmutable;
         private AtomicInteger value;
+        private Set<Integer> availableCache;
 
         public CellImpl(int id, int value) {
             this.id = id;
@@ -365,9 +368,11 @@ public class CellModel {
 
         @Override
         public Set<Integer> getAvailableValues() {
-            if (isImmutable.get()) {
+            if (isImmutable.get())
                 return Collections.emptySet();
-            }
+
+            if (availableCache != null)
+                return availableCache;
 
             LinkedList<Set<Integer>> sorted = new LinkedList<>();
             sorted.add(getHorizontalGroup().getAvailableValues());
@@ -391,13 +396,19 @@ public class CellModel {
                 if (s1.contains(value) && s2.contains(value))
                     available.add(value);
             }
-            return Collections.unmodifiableSet(available);
+            availableCache = Collections.unmodifiableSet(available);
+            return availableCache;
+        }
+
+        public void resetAvailableCache() {
+            availableCache = null;
         }
     }
 
     private class GroupImpl implements Group {
         private final int id;
         private final List<Cell> cells;
+        private Set<Integer> availableCache;
 
         public GroupImpl(int id, List<Cell> cells) {
             this.id = id;
@@ -416,6 +427,9 @@ public class CellModel {
 
         @Override
         public Set<Integer> getAvailableValues() {
+            if (availableCache != null)
+                return availableCache;
+
             Set<Integer> available = new HashSet<>(LEGAL_VALUES);
             for (Cell cell: cells) {
                 int value = cell.getValue();
@@ -423,7 +437,14 @@ public class CellModel {
                     available.remove(value);
                 }
             }
-            return Collections.unmodifiableSet(available);
+            availableCache = Collections.unmodifiableSet(available);
+            return availableCache;
+        }
+
+        public void resetAvailableCache() {
+            availableCache = null;
+            for (Cell cell: cells)
+                ((CellImpl)cell).resetAvailableCache();
         }
     }
 

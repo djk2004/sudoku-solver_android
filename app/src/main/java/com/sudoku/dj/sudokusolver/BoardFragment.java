@@ -15,14 +15,21 @@ import com.sudoku.dj.sudokusolver.solver.CellModelManager;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 public class BoardFragment extends Fragment {
     public static final int CONTEXT_ID = 1;
 
-    private CellModel.ChangeListenerRegistration reg;
     private Map<Integer, Integer> cellIDsToBoxIDs;
+    private ScheduledExecutorService executorService;
+    private CellModel.ChangeListenerRegistration reg;
+    private Set<Cell> changes;
 
     public BoardFragment() {
         // Required empty public constructor
@@ -39,6 +46,9 @@ public class BoardFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_board, container, false);
         cellIDsToBoxIDs = buildCellIDsMap();
+        changes = new HashSet<>();
+        executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService.scheduleWithFixedDelay(new UpdateTask(), 5, 100, TimeUnit.MILLISECONDS);
         return view;
     }
 
@@ -47,12 +57,19 @@ public class BoardFragment extends Fragment {
         super.onStart();
 
         if (!CellModelManager.isModelInitialized()) {
-            reg = CellModelManager.initializeModel(buildUIChangeListener());
-
             // must run after onCreateView() returns
             MainActivity activity = (MainActivity)getActivity();
             activity.showProgressFragment();
             CellModelManager.buildNewBoard(activity);
+
+            reg = CellModelManager.getInstance().addListener(new CellModel.ChangeListener() {
+                @Override
+                public void onChange(Cell cell, int oldValue) {
+                    synchronized (changes) {
+                        changes.add(cell);
+                    }
+                }
+            });
         }
     }
 
@@ -62,16 +79,20 @@ public class BoardFragment extends Fragment {
 
         View view = getView();
         for (Cell cell: CellModelManager.getInstance().getFilledCells()) {
-            Integer id = Integer.valueOf(cell.getID());
-            Integer viewID = cellIDsToBoxIDs.get(id);
-            TextView text = (TextView)view.findViewById(viewID);
-            int value = cell.getValue();
-            String textValue = value == 0 ? "" : ""+value;
-            text.setTextColor(cell.isLocked() ?
-                    ContextCompat.getColor(text.getContext(), android.R.color.black) :
-                    ContextCompat.getColor(text.getContext(), R.color.colorPrimaryDark));
-            text.setText(textValue);
+            updateCellView(cell, view);
         }
+    }
+
+    private void updateCellView(Cell cell, View view) {
+        Integer id = Integer.valueOf(cell.getID());
+        Integer viewID = cellIDsToBoxIDs.get(id);
+        TextView text = (TextView)view.findViewById(viewID);
+        int value = cell.getValue();
+        String textValue = value == 0 ? "" : ""+value;
+        text.setTextColor(cell.isLocked() ?
+                ContextCompat.getColor(text.getContext(), android.R.color.black) :
+                ContextCompat.getColor(text.getContext(), R.color.colorPrimaryDark));
+        text.setText(textValue);
     }
 
     @Override
@@ -84,32 +105,12 @@ public class BoardFragment extends Fragment {
         super.onDetach();
         if (reg != null) {
             reg.unregister();
+            reg = null;
         }
-    }
-
-    public CellModel.ChangeListener buildUIChangeListener() {
-        return new CellModel.ChangeListener() {
-            @Override
-            public void onChange(final Cell cell, int oldValue) {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        View view = getView();
-                        if (view == null)
-                            return;
-                        Integer id = Integer.valueOf(cell.getID());
-                        Integer viewID = cellIDsToBoxIDs.get(id);
-                        TextView text = (TextView)view.findViewById(viewID);
-                        int value = cell.getValue();
-                        String textValue = value == 0 ? "" : ""+value;
-                        text.setTextColor(cell.isLocked() ?
-                                ContextCompat.getColor(text.getContext(), android.R.color.black) :
-                                ContextCompat.getColor(text.getContext(), R.color.colorPrimaryDark));
-                        text.setText(textValue);
-                    }
-                });
-            }
-        };
+        if (executorService != null) {
+            executorService.shutdownNow();
+            executorService = null;
+        }
     }
 
     // HACK: probably a better way to do this
@@ -197,5 +198,34 @@ public class BoardFragment extends Fragment {
         map.put(Integer.valueOf(79), R.id.box79);
         map.put(Integer.valueOf(80), R.id.box80);
         return Collections.unmodifiableMap(map);
+    }
+
+    private class UpdateTask implements Runnable {
+        @Override
+        public void run() {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    View view = getView();
+                    if (view == null)
+                        return;
+
+                    synchronized (changes) {
+                        for (Cell cell : changes) {
+                            Integer id = Integer.valueOf(cell.getID());
+                            Integer viewID = cellIDsToBoxIDs.get(id);
+                            TextView text = (TextView)view.findViewById(viewID);
+                            int value = cell.getValue();
+                            String textValue = value == 0 ? "" : ""+value;
+                            text.setTextColor(cell.isLocked() ?
+                                    ContextCompat.getColor(text.getContext(), android.R.color.black) :
+                                    ContextCompat.getColor(text.getContext(), R.color.colorPrimaryDark));
+                            text.setText(textValue);
+                        }
+                        changes.clear();
+                    }
+                }
+            });
+        }
     }
 }

@@ -1,10 +1,7 @@
 package com.sudoku.dj.sudokusolver.solver;
 
-import android.content.res.AssetManager;
-
 import com.sudoku.dj.sudokusolver.MainActivity;
 import com.sudoku.dj.sudokusolver.tasks.BackgroundTaskManager;
-import com.sudoku.dj.sudokusolver.tasks.BoardGeneratorTask;
 import com.sudoku.dj.sudokusolver.tasks.MaskBoardGeneratorTask;
 
 import java.util.Random;
@@ -27,16 +24,6 @@ public class CellModelManager {
         MaskBoardGeneratorTask task = new MaskBoardGeneratorTask(filledCells, activity);
         BackgroundTaskManager.getInstance().runTask(task, cellModel);
         return cellModel;
-    }
-
-    /**
-     * Instantiates the global cell model
-     * @return
-     */
-    public static CellModel.ChangeListenerRegistration initializeModel(CellModel.ChangeListener listener) {
-        cellModel = new CellModel();
-        CellModel.ChangeListenerRegistration reg = cellModel.addListener(listener);
-        return reg;
     }
 
     /**
