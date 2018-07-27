@@ -57,7 +57,7 @@ public class SolveTask implements BackgroundTaskManager.BackgroundTaskWork<Solve
             }
             Solver solver = new Solver(model, Solver.SolverType.BACKTRACKING);
             steps += solver.solve(BackgroundTaskManager.getInstance().isCurrentTaskCancelled());
-        } while (!model.isSolveable() && !BackgroundTaskManager.getInstance().isCurrentTaskCancelled().get());
+        } while (!model.isSolved() && !BackgroundTaskManager.getInstance().isCurrentTaskCancelled().get());
     }
 
     @Override

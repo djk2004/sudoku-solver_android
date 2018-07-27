@@ -109,7 +109,7 @@ public class CellModel {
         CellFilter filter = new CellFilter() {
             @Override
             public boolean filter(Cell cell) {
-                return (cell.getAvailableValues().size() == NO_VALUE);
+                return !cell.isEmpty();
             }
         };
         return getFilteredCells(filter);
@@ -123,7 +123,7 @@ public class CellModel {
         CellFilter filter = new CellFilter() {
             @Override
             public boolean filter(Cell cell) {
-                return (cell.getAvailableValues().size() != NO_VALUE);
+                return cell.isEmpty();
             }
         };
         return getFilteredCells(filter);
@@ -185,7 +185,7 @@ public class CellModel {
     public boolean isSolveable() {
         for (CellImpl cell: cells) {
             if (!cell.isLocked() &&
-                cell.getValue() == NO_VALUE && 
+                cell.isEmpty() &&
                 cell.getAvailableValues().size() == 0) {
                 return false;
             }
@@ -199,7 +199,7 @@ public class CellModel {
      */
     public boolean isSolved() {
         for (CellImpl cell: cells) {
-            if (cell.getValue() == NO_VALUE || cell.getAvailableValues().size() > 0)
+            if (cell.isEmpty() || cell.getAvailableValues().size() > 0)
                 return false;
         }
         return true;
@@ -391,7 +391,7 @@ public class CellModel {
                 if (t > 0)
                     available.add(test);
             }
-            
+
             availableCache = Collections.unmodifiableSet(available);
             return availableCache;
         }
