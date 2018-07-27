@@ -48,4 +48,10 @@ public interface Cell {
      * @return
      */
     boolean isLocked();
+
+    /**
+     * Returns true if the cell does not have an assigned value.
+     * @return
+     */
+    boolean isEmpty();
 }

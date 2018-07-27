@@ -17,9 +17,4 @@ public interface Group {
      * Gets the list of cells associated with this group.
      */
     List<Cell> getCells();
-
-    /**
-     * Gets the list of all values that have not been assigned to a cell in the group.
-     */
-    Set<Integer> getAvailableValues();
 }

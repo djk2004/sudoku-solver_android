@@ -367,6 +367,11 @@ public class CellModel {
         }
 
         @Override
+        public boolean isEmpty() {
+            return value.get() == NO_VALUE;
+        }
+
+        @Override
         public Set<Integer> getAvailableValues() {
             if (isImmutable.get())
                 return Collections.emptySet();
@@ -374,28 +379,19 @@ public class CellModel {
             if (availableCache != null)
                 return availableCache;
 
-            LinkedList<Set<Integer>> sorted = new LinkedList<>();
-            sorted.add(getHorizontalGroup().getAvailableValues());
-            sorted.add(getVerticalGroup().getAvailableValues());
-            sorted.add(getCubeGroup().getAvailableValues());
-            Collections.sort(sorted, new Comparator<Set<Integer>>() {
-                @Override
-                public int compare(Set<Integer> a, Set<Integer> b) {
-                    Integer aSize = Integer.valueOf(a.size());
-                    Integer bSize = Integer.valueOf(b.size());
-                    return aSize.compareTo(bSize);
-                }
-            });
+            int h = ((GroupImpl)getHorizontalGroup()).getAvailableValues();
+            int v = ((GroupImpl)getVerticalGroup()).getAvailableValues();
+            int c = ((GroupImpl)getCubeGroup()).getAvailableValues();
+            int a = h & v & c;
 
-            // use the smallest of the three sets to find intersections with the other two
-            Set<Integer> smallest = sorted.removeFirst();
-            Set<Integer> s1 = sorted.removeFirst();
-            Set<Integer> s2 = sorted.removeFirst();
             Set<Integer> available = new HashSet<>();
-            for (Integer value : smallest) {
-                if (s1.contains(value) && s2.contains(value))
-                    available.add(value);
+            for (Integer test : LEGAL_VALUES) {
+                int value = new Double(Math.pow(2, test.intValue() - 1)).intValue();
+                int t = a & value;
+                if (t > 0)
+                    available.add(test);
             }
+            
             availableCache = Collections.unmodifiableSet(available);
             return availableCache;
         }
@@ -408,7 +404,7 @@ public class CellModel {
     private class GroupImpl implements Group {
         private final int id;
         private final List<Cell> cells;
-        private Set<Integer> availableCache;
+        private Integer availableCache;
 
         public GroupImpl(int id, List<Cell> cells) {
             this.id = id;
@@ -425,19 +421,18 @@ public class CellModel {
             return cells;
         }
 
-        @Override
-        public Set<Integer> getAvailableValues() {
+        public int getAvailableValues() {
             if (availableCache != null)
                 return availableCache;
 
-            Set<Integer> available = new HashSet<>(LEGAL_VALUES);
+            int all = new Double(Math.pow(2, MAX_CELLS_IN_GROUP)).intValue() - 1;
+            int row = 0;
             for (Cell cell: cells) {
                 int value = cell.getValue();
-                if (value != NO_VALUE) {
-                    available.remove(value);
-                }
+                if (value != NO_VALUE)
+                    row += new Double(Math.pow(2, value - 1)).intValue();
             }
-            availableCache = Collections.unmodifiableSet(available);
+            availableCache = all ^ row;
             return availableCache;
         }
 

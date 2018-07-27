@@ -5,6 +5,7 @@ import com.sudoku.dj.sudokusolver.solver.Cell;
 import com.sudoku.dj.sudokusolver.solver.CellModel;
 import com.sudoku.dj.sudokusolver.solver.CellModelManager;
 import com.sudoku.dj.sudokusolver.solver.CurrentSolverStatsManager;
+import com.sudoku.dj.sudokusolver.solver.Group;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -62,9 +63,9 @@ public class MaskBoardGeneratorTask implements BackgroundTaskManager.BackgroundT
             int index = random.nextInt(CellModel.MAX_CELLS);
             Cell target = model.getCell(index);
             if (target.getValue() > 0 ||
-                    target.getHorizontalGroup().getAvailableValues().size() < maxAvailablePerGroup ||
-                    target.getVerticalGroup().getAvailableValues().size() < maxAvailablePerGroup ||
-                    target.getCubeGroup().getAvailableValues().size() < maxAvailablePerGroup) {
+                    getEmptyCellCount(target.getHorizontalGroup()) < maxAvailablePerGroup ||
+                    getEmptyCellCount(target.getVerticalGroup()) < maxAvailablePerGroup ||
+                    getEmptyCellCount(target.getCubeGroup()) < maxAvailablePerGroup) {
                 continue;
             }
             char c = mask.charAt(index);
@@ -72,6 +73,15 @@ public class MaskBoardGeneratorTask implements BackgroundTaskManager.BackgroundT
             model.setValue(target, value);
             cellCount++;
         }
+    }
+
+    private int getEmptyCellCount(Group group) {
+        int count = 0;
+        for (Cell cell: group.getCells()) {
+            if (cell.isEmpty())
+                count++;
+        }
+        return count;
     }
 
     private Map<Character, Integer> buildMap() {

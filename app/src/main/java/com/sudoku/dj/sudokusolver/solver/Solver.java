@@ -171,9 +171,18 @@ public class Solver {
 
         private int buildAvailableValuesCount(Cell c) {
             return (CellModel.MAX_CELLS_IN_GROUP * 3) -
-                (c.getHorizontalGroup().getAvailableValues().size() +
-                c.getVerticalGroup().getAvailableValues().size() +
-                c.getCubeGroup().getAvailableValues().size());
+                    (getEmptyCellCount(c.getHorizontalGroup()) +
+                    getEmptyCellCount(c.getVerticalGroup()) +
+                    getEmptyCellCount(c.getCubeGroup()));
+        }
+
+        private int getEmptyCellCount(Group group) {
+            int count = 0;
+            for (Cell cell: group.getCells()) {
+                if (cell.isEmpty())
+                    count++;
+            }
+            return count;
         }
 
         @Override
