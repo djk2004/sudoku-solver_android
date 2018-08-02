@@ -21,15 +21,7 @@ public class CellModel {
     public static final int MAX_CELLS_IN_CUBE = Double.valueOf(Math.sqrt(MAX_CELLS_IN_GROUP)).intValue();
     
     private static final int NO_VALUE = 0;
-    private static final Set<Integer> LEGAL_VALUES;
-    
-    static {
-        Set<Integer> all = new HashSet<>();
-        for (int i=1; i<= MAX_CELLS_IN_GROUP; i++) {
-            all.add(i);
-        }
-        LEGAL_VALUES = Collections.unmodifiableSet(all);
-    }
+    private static final int ALL_VALUES_BYTES = new Double(Math.pow(2, MAX_CELLS_IN_GROUP)).intValue() - 1;
 
     private static List<Integer> buildEmptyCellModel() {
         List<Integer> list = new ArrayList<>(MAX_CELLS);
@@ -333,7 +325,12 @@ public class CellModel {
             if (this.isImmutable.get()) {
                 throw new UnsupportedOperationException("Attempted to alter immutable cell value ["+this.value+"]");
             }
-            this.value.set(value);
+            if (value == NO_VALUE) {
+                this.value.set(NO_VALUE);
+                return;
+            }
+            int bytes = new Double(Math.pow(2, value - 1)).intValue();
+            this.value.set(bytes);
         }
 
         @Override
@@ -343,6 +340,11 @@ public class CellModel {
 
         @Override
         public int getValue() {
+            int v = value.get();
+            return (v == NO_VALUE) ? NO_VALUE : Math.round((float)(Math.log(v) / Math.log(2))) + 1;
+        }
+
+        public int getRawValue() {
             return value.get();
         }
 
@@ -385,11 +387,11 @@ public class CellModel {
             int a = h & v & c;
 
             Set<Integer> available = new HashSet<>();
-            for (Integer test : LEGAL_VALUES) {
-                int value = new Double(Math.pow(2, test.intValue() - 1)).intValue();
+            for (int i=0; i<MAX_CELLS_IN_GROUP; i++) {
+                int value = new Double(Math.pow(2, i)).intValue();
                 int t = a & value;
                 if (t > 0)
-                    available.add(test);
+                    available.add((i+1));
             }
 
             availableCache = Collections.unmodifiableSet(available);
@@ -425,14 +427,12 @@ public class CellModel {
             if (availableCache != null)
                 return availableCache;
 
-            int all = new Double(Math.pow(2, MAX_CELLS_IN_GROUP)).intValue() - 1;
             int row = 0;
             for (Cell cell: cells) {
-                int value = cell.getValue();
-                if (value != NO_VALUE)
-                    row += new Double(Math.pow(2, value - 1)).intValue();
+                int value = ((CellImpl)cell).getRawValue();
+                row += value;
             }
-            availableCache = all ^ row;
+            availableCache = ALL_VALUES_BYTES ^ row;
             return availableCache;
         }
 
